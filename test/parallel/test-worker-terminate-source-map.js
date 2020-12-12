@@ -8,15 +8,18 @@ const assert = require('assert');
 
 const { Worker, workerData, parentPort } = require('worker_threads');
 
+const BUFFER_SIZE = 1024;
+
 if (!workerData) {
   tmpdir.refresh();
   process.env.NODE_V8_COVERAGE = tmpdir.path;
 
   // Count the number of some calls that should not be made.
-  const callCount = new Int32Array(new SharedArrayBuffer(4));
+  const callCount = new Uint8Array(new SharedArrayBuffer(BUFFER_SIZE));
   const w = new Worker(__filename, { workerData: { callCount } });
   w.on('message', common.mustCall(() => w.terminate()));
   w.on('exit', common.mustCall(() => {
+    process.stderr.write(callCount);
     assert.strictEqual(callCount[0], 0);
   }));
   return;
@@ -25,6 +28,7 @@ if (!workerData) {
 const { callCount } = workerData;
 
 function increaseCallCount() { callCount[0]++; }
+const encoder = new TextEncoder();
 
 // Increase the call count when a forbidden method is called.
 for (const property of ['_cache', 'lineLengths', 'url']) {
@@ -33,18 +37,43 @@ for (const property of ['_cache', 'lineLengths', 'url']) {
     set: increaseCallCount
   });
 }
-Object.getPrototypeOf([][Symbol.iterator]()).next = function() {
-  throw new Error('Calling %ArrayIteratorPrototype%.next')
-};
-Object.getPrototypeOf((new Map()).entries()).next = function() {
-  throw new Error('Calling %MapIteratorPrototype%.next')
-};
-Array.prototype[Symbol.iterator] = function(){
-  throw new Error('Calling @@iterator on array')
-};
-Map.prototype[Symbol.iterator] = function(){
-    throw new Error('Calling @@iterator on map')
+{ const ArrayIterator = Object.getPrototypeOf([][Symbol.iterator]());
+  const { next } = ArrayIterator;
+  ArrayIterator.next = function() {
+    const error = new Error('Calling %ArrayIteratorPrototype%.next');
+    const stack = encoder.encode(error.stack);
+    for (let i = 0; i < BUFFER_SIZE; ++i) {
+      callCount[i] = stack[i] || 0;
+    }
+    return Reflect.apply(next, this, arguments);
   };
+}
+Object.getPrototypeOf((new Map()).entries()).next = function() {
+  const error = new Error('Calling %MapIteratorPrototype%.next');
+  const stack = encoder.encode(error.stack);
+  for (let i = 0; i < BUFFER_SIZE; ++i) {
+    callCount[i] = stack[i] || 0;
+  }
+};
+{
+  const original =
+Array.prototype[Symbol.iterator];
+  Array.prototype[Symbol.iterator] = function() {
+    const error = new Error('Calling @@iterator on array');
+    const stack = encoder.encode(error.stack);
+    for (let i = 0; i < BUFFER_SIZE; ++i) {
+      callCount[i] = stack[i] || 0;
+    }
+    return Reflect.apply(original, this, arguments);
+  };
+}
+Map.prototype[Symbol.iterator] = function() {
+  const error = new Error('Calling @@iterator on map');
+  const stack = encoder.encode(error.stack);
+  for (let i = 0; i < BUFFER_SIZE; ++i) {
+    callCount[i] = stack[i] || 0;
+  }
+};
 Map.prototype.entries = increaseCallCount;
 Object.keys = increaseCallCount;
 Object.create = increaseCallCount;
