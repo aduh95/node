@@ -8,7 +8,7 @@ const assert = require('assert');
 
 const { Worker, workerData, parentPort } = require('worker_threads');
 
-const BUFFER_SIZE = 1024;
+const BUFFER_SIZE = 5 * 1024;
 
 if (!workerData) {
   tmpdir.refresh();
@@ -27,6 +27,8 @@ if (!workerData) {
 
 const { callCount } = workerData;
 
+let i = 0;
+
 function increaseCallCount() { callCount[0]++; }
 const encoder = new TextEncoder();
 
@@ -42,8 +44,10 @@ for (const property of ['_cache', 'lineLengths', 'url']) {
   ArrayIterator.next = function() {
     const error = new Error('Calling %ArrayIteratorPrototype%.next');
     const stack = encoder.encode(error.stack);
-    for (let i = 0; i < BUFFER_SIZE; ++i) {
-      callCount[i] = stack[i] || 0;
+    if (i) callCount[i++] = 10;
+    while (i < BUFFER_SIZE && i < stack.length) {
+      callCount[i] = stack[i];
+      i++;
     }
     return Reflect.apply(next, this, arguments);
   };
@@ -51,8 +55,10 @@ for (const property of ['_cache', 'lineLengths', 'url']) {
 Object.getPrototypeOf((new Map()).entries()).next = function() {
   const error = new Error('Calling %MapIteratorPrototype%.next');
   const stack = encoder.encode(error.stack);
-  for (let i = 0; i < BUFFER_SIZE; ++i) {
-    callCount[i] = stack[i] || 0;
+  if (i) callCount[i++] = 10;
+  while (i < BUFFER_SIZE && i < stack.length) {
+    callCount[i] = stack[i];
+    i++;
   }
 };
 {
@@ -61,8 +67,10 @@ Array.prototype[Symbol.iterator];
   Array.prototype[Symbol.iterator] = function() {
     const error = new Error('Calling @@iterator on array');
     const stack = encoder.encode(error.stack);
-    for (let i = 0; i < BUFFER_SIZE; ++i) {
-      callCount[i] = stack[i] || 0;
+    if (i) callCount[i++] = 10;
+    while (i < BUFFER_SIZE && i < stack.length) {
+      callCount[i] = stack[i];
+      i++;
     }
     return Reflect.apply(original, this, arguments);
   };
@@ -70,8 +78,10 @@ Array.prototype[Symbol.iterator];
 Map.prototype[Symbol.iterator] = function() {
   const error = new Error('Calling @@iterator on map');
   const stack = encoder.encode(error.stack);
-  for (let i = 0; i < BUFFER_SIZE; ++i) {
-    callCount[i] = stack[i] || 0;
+  if (i) callCount[i++] = 10;
+  while (i < BUFFER_SIZE && i < stack.length) {
+    callCount[i] = stack[i];
+    i++;
   }
 };
 Map.prototype.entries = increaseCallCount;
