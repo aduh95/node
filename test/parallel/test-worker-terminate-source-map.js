@@ -33,10 +33,18 @@ for (const property of ['_cache', 'lineLengths', 'url']) {
     set: increaseCallCount
   });
 }
-Object.getPrototypeOf([][Symbol.iterator]()).next = increaseCallCount;
-Object.getPrototypeOf((new Map()).entries()).next = increaseCallCount;
-Array.prototype[Symbol.iterator] = increaseCallCount;
-Map.prototype[Symbol.iterator] = increaseCallCount;
+Object.getPrototypeOf([][Symbol.iterator]()).next = function() {
+  throw new Error('Calling %ArrayIteratorPrototype%.next')
+};
+Object.getPrototypeOf((new Map()).entries()).next = function() {
+  throw new Error('Calling %MapIteratorPrototype%.next')
+};
+Array.prototype[Symbol.iterator] = function(){
+  throw new Error('Calling @@iterator on array')
+};
+Map.prototype[Symbol.iterator] = function(){
+    throw new Error('Calling @@iterator on map')
+  };
 Map.prototype.entries = increaseCallCount;
 Object.keys = increaseCallCount;
 Object.create = increaseCallCount;
