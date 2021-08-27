@@ -1111,6 +1111,14 @@ The JS execution context is not associated with a Node.js environment.
 This may occur when Node.js is used as an embedded library and some hooks
 for the JS engine are not set up properly.
 
+<a id="ERR_FAILED_IMPORT_ASSERTION"></a>
+### `ERR_FAILED_IMPORT_ASSERTION`
+<!-- YAML
+added: REPLACEME
+-->
+
+An import assertion has failed, preventing the specified module to be imported.
+
 <a id="ERR_FALSY_VALUE_REJECTION"></a>
 ### `ERR_FALSY_VALUE_REJECTION`
 
@@ -1662,6 +1670,14 @@ for more information.
 
 An invalid HTTP token was supplied.
 
+<a id="ERR_INVALID_IMPORT_ASSERTION"></a>
+### `ERR_INVALID_IMPORT_ASSERTION`
+<!-- YAML
+added: REPLACEME
+-->
+
+An import assertion is not supported by this version of Node.js.
+
 <a id="ERR_INVALID_IP_ADDRESS"></a>
 ### `ERR_INVALID_IP_ADDRESS`
 
@@ -1912,6 +1928,15 @@ strict compliance with the API specification (which in some cases may accept
 `func(undefined)` but not `func()`). In most native Node.js APIs,
 `func(undefined)` and `func()` are treated identically, and the
 [`ERR_INVALID_ARG_TYPE`][] error code may be used instead.
+
+<a id="ERR_MISSING_IMPORT_ASSERTION"></a>
+### `ERR_MISSING_IMPORT_ASSERTION`
+<!-- YAML
+added: REPLACEME
+-->
+
+An attempt was made to import a module without an assertion that requires
+a specific import assertion to be loaded.
 
 <a id="ERR_MISSING_OPTION"></a>
 ### `ERR_MISSING_OPTION`
