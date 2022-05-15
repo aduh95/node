@@ -11,7 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        fetch-depth: 2
+        with:
+          fetch-depth: 2
 
       - run: git diff HEAD
       - run: git diff HEAD^2
