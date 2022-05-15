@@ -1,7 +1,6 @@
 name: Tests
 
 on:
-  push:
   pull_request:
 
 jobs:
@@ -11,8 +10,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
 
       - run: git --no-pager diff --name-only HEAD^
       - run: git --no-pager diff --name-only HEAD^2
