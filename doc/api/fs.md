@@ -4101,7 +4101,7 @@ changes:
                  `ERR_INVALID_CALLBACK`.
   - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/23724
-    description: If the `type` argument is left undefined, Node will autodetect
+    description: If the `type` argument is left undefined, Node.js will autodetect
                  `target` type and automatically select `dir` or `file`.
   - version: v7.6.0
     pr-url: https://github.com/nodejs/node/pull/10739
@@ -5845,7 +5845,7 @@ added: v0.1.31
 changes:
   - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/23724
-    description: If the `type` argument is left undefined, Node will autodetect
+    description: If the `type` argument is left undefined, Node.js will autodetect
                  `target` type and automatically select `dir` or `file`.
   - version: v7.6.0
     pr-url: https://github.com/nodejs/node/pull/10739
