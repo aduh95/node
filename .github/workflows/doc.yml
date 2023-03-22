@@ -27,8 +27,12 @@ jobs:
     outputs:
       DOCS_HAVE_CHANGED: ${{ steps.output.outputs.DOCS_HAVE_CHANGED }}
     steps:
+      - name: Compute number of commits in the PR
+        id: nb-of-commits
+        run: echo "plusOne=$((${{ github.event.pull_request.commits }} + 1))" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v3
         with:
+          fetch-depth: ${{ steps.nb-of-commits.outputs.plusOne }}
           persist-credentials: false
       - name: Use Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v3
@@ -45,6 +49,7 @@ jobs:
         if: github.event.pull_request && github.event.action != 'synchronize'
         run: git diff --quiet ${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.ref }} -- docs/api || echo "DOCS_HAVE_CHANGED=1" >> "$GITHUB_ENV"
       - id: output
+        name: Output result of the previous check
         run: echo "DOCS_HAVE_CHANGED=${{ env.DOCS_HAVE_CHANGED }}" > "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v3
         if: github.env.DOCS_HAVE_CHANGED || github.event.pusher
@@ -55,7 +60,7 @@ jobs:
         run: NODE=$(command -v node) make test-doc-ci TEST_CI_ARGS="-p actions --measure-flakiness 9"
   build-preview:
     needs: build-docs
-    if: needs.build-docs.outputs.DOCS_HAVE_CHANGED
+    if: needs.build-docs.outputs.DOCS_HAVE_CHANGED == 1
     concurrency:
       group: node-pr-doc-preview
       cancel-in-progress: false
