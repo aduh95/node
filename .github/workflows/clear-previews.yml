@@ -1,4 +1,4 @@
-name: Test and upload documentation to artifacts
+name: Remove doc preview of closed PRs
 
 on:
   pull_request:
@@ -39,7 +39,6 @@ jobs:
           # authentication for push as well.
           token: ${{ secrets.GH_USER_TOKEN }}
       - name: Erase previous version (if it exists)
-        run: 
         run: |
           git config user.email "github-bot@iojs.org"
           git config user.name "Node.js GitHub Bot"
