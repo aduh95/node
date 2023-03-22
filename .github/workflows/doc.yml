@@ -46,7 +46,7 @@ jobs:
     if: github.event.pull_request
     needs: build-docs
     concurrency:
-      group: gh-pages
+      group: node-pr-doc-preview
       cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
@@ -55,7 +55,7 @@ jobs:
         with:
           # We want to persist credentials so we can push to gh-pages
           persist-credentials: true
-          ref: node-pr-doc-preview
+          ref: gh-pages
           repository: ${{ github.repository_owner }}/node-pr-doc-preview
           # A personal token is required GITHUB_TOKEN cannot be configured to
           # have write access on a repo except the one the action runs on.
