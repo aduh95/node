@@ -24,6 +24,8 @@ jobs:
   build-docs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    outputs:
+      DOCS_HAVE_CHANGED: ${{ steps.output.outputs.DOCS_HAVE_CHANGED }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -36,15 +38,24 @@ jobs:
         run: npx envinfo
       - name: Build
         run: NODE=$(command -v node) make doc-only
+      - name: Check if the docs have changed (synchronize)
+        if: github.event.action == 'synchronize'
+        run: git diff --quiet ${{ github.event.before }}..${{ github.event.after }} -- docs/api || echo "DOCS_HAVE_CHANGED=1" >> "$GITHUB_ENV"
+      - name: Check if the docs have changed ((re)open)
+        if: github.event.pull_request && github.event.action != 'synchronize'
+        run: git diff --quiet ${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.ref }} -- docs/api || echo "DOCS_HAVE_CHANGED=1" >> "$GITHUB_ENV"
+      - id: output
+        run: echo "DOCS_HAVE_CHANGED=${{ env.DOCS_HAVE_CHANGED }}" > "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v3
+        if: github.env.DOCS_HAVE_CHANGED || github.event.pusher
         with:
           name: docs
           path: out/doc
       - name: Test
         run: NODE=$(command -v node) make test-doc-ci TEST_CI_ARGS="-p actions --measure-flakiness 9"
   build-preview:
-    if: github.event.pull_request
     needs: build-docs
+    if: needs.build-docs.outputs.DOCS_HAVE_CHANGED
     concurrency:
       group: node-pr-doc-preview
       cancel-in-progress: false
