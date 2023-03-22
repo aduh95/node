@@ -57,7 +57,7 @@ jobs:
         name: Output result of the previous check
         run: echo "DOCS_HAVE_CHANGED=${{ env.DOCS_HAVE_CHANGED }}" > "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v3
-        if: github.env.DOCS_HAVE_CHANGED || github.event.pusher
+        if: env.DOCS_HAVE_CHANGED || github.event.pusher
         with:
           name: docs
           path: out/doc
