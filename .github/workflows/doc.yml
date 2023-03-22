@@ -77,6 +77,6 @@ jobs:
             git add "${{ github.event.pull_request.number }}" &&\
             git commit \
               -m "Add/Update preview for ${{ github.event.pull_request.html_url }}" \
-              -m "The preview will be available at https://${{ github.repository_owner }}.github.io/node-pr-doc-preview/${{ github.event.pull_request.number }}/api/" \ &&
+              -m "The preview will be available at https://${{ github.repository_owner }}.github.io/node-pr-doc-preview/${{ github.event.pull_request.number }}/api/" &&\
             git push origin HEAD:gh-pages \
           )
