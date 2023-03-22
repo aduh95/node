@@ -41,6 +41,8 @@ jobs:
             fi
           done
           echo "nbOfCommits=$NB_OF_COMMITS" >> "GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Compute number of commits in the PR
         id: nb-of-commits
         run: |
