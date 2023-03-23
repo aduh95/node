@@ -40,7 +40,7 @@ jobs:
               break
             fi
           done
-          echo "nbOfCommits=$NB_OF_COMMITS" >> "GITHUB_OUTPUT"
+          echo "nbOfCommits=$NB_OF_COMMITS" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Compute number of commits in the PR
@@ -49,7 +49,7 @@ jobs:
           if [ "${{ github.event.action }}" = "synchronize" ]; then
             echo "plusOne=$((${{ steps.last-successful-run.outputs.nbOfCommits }} + 1))" >> "$GITHUB_OUTPUT"
           else
-            echo "plusOne=2" >> "GITHUB_OUTPUT"
+            echo "plusOne=2" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/checkout@v3
         with:
