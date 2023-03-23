@@ -85,6 +85,8 @@ jobs:
   deploy-preview:
     needs: build-docs
     if: needs.build-docs.outputs.DOCS_HAVE_CHANGED == 1
+    permissions:
+      statuses: write
     concurrency:
       group: node-pr-doc-preview
       cancel-in-progress: false
