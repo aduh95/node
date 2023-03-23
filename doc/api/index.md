@@ -5,7 +5,7 @@
 
 <!--introduced_in=v0.10.0-->
 
-* [About my Node.js documentation PR](documentation.md)
+* [About this documentation](documentation.md)
 * [Usage and example](synopsis.md)
 
 <hr class="line"/>
