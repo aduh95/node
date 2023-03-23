@@ -146,7 +146,6 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
             -f state='success' \
-            -f "target_url='https://github.com/${{ github.repository_owner }}/node-pr-doc-preview/commits/$(git rev-parse HEAD)'"
             -f description='The build succeeded, the preview has been queued for deployment!' \
             -f context='node-pr-doc-preview/deploy' 
         env:
