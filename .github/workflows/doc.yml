@@ -34,8 +34,8 @@ jobs:
           WORKFLOW_ID=$(gh api /repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .workflow_id)
           NB_OF_COMMITS=1
           for sha in $(gh api /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits --jq 'map(.sha) | reverse | join("\n")'); do
-            NB_OF_COMMITS=$(($NB_OF_COMMITS + 1 ))
-            if [ $(gh api -X GET /repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs -f head_sha=$sha -f status=success --jq .total_count) -eq 0 ]; then
+            NB_OF_COMMITS=$(($NB_OF_COMMITS + 1))
+            if [ $(gh api -X GET /repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs -f head_sha=$sha -f status=success --jq .total_count) -gt 0 ]; then
               echo "sha=$sha" >> "$GITHUB_OUTPUT"
               break
             fi
