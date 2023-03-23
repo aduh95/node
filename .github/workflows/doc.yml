@@ -24,7 +24,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions:
-      statuses: read
+      statuses: write
     outputs:
       DOCS_HAVE_CHANGED: ${{ env.DOCS_HAVE_CHANGED }}
     steps:
