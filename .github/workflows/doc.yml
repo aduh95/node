@@ -45,7 +45,9 @@ jobs:
       - name: Compute number of commits in the PR
         id: nb-of-commits
         run: |
-          if [ "${{ github.event.action }}" = "synchronize" ]; then
+          if [ -z "${{ github.event.action }}" ]; then
+            echo "plusOne=1" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.action }}" = "synchronize" ]; then
             echo "plusOne=$((${{ steps.last-successful-run.outputs.nbOfCommits }} + 1))" >> "$GITHUB_OUTPUT"
           else
             echo "plusOne=2" >> "$GITHUB_OUTPUT"
