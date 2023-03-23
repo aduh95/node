@@ -130,3 +130,5 @@ jobs:
             -f state='success' \
             -f description='The build succeeded, the preview has been queued for deployment!' \
             -f context='node-pr-doc-preview/deploy' 
+        env:
+          GH_TOKEN: ${{ github.token }}
