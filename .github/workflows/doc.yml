@@ -23,6 +23,8 @@ jobs:
   build-docs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    permissions:
+      statuses: read
     outputs:
       DOCS_HAVE_CHANGED: ${{ env.DOCS_HAVE_CHANGED }}
     steps:
@@ -32,11 +34,12 @@ jobs:
         # We want to fetch the minimum number of commits since the docs have
         # changed. The variable is initialized to 1 to account for the merge commit.
         run: |
-          WORKFLOW_ID=$(gh api /repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .workflow_id)
           NB_OF_COMMITS=1
-          for sha in $(gh api /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits --jq 'map(.sha) | reverse | join("\n")'); do
+          for sha in $(gh api -X GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits -f per_page=250 --jq 'map(.sha) | reverse | join("\n")'); do
             NB_OF_COMMITS=$((NB_OF_COMMITS+1))
-            if [ $(gh api -X GET /repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs -f head_sha=$sha -f status=success --jq .total_count) -gt 0 ]; then
+            HAS_BEEN_DEPLOYED=$(gh api "/repos/${{ github.repository }}/commits/$sha/statuses" --jq 'map(.context == "node-pr-doc-preview/deploy") | any')
+            if [ "$HAS_BEEN_DEPLOYED" = "true" ]; then
+              echo "Found last successful run on $sha, $NB_OF_COMMITS commit(s) ago"
               echo "sha=$sha" >> "$GITHUB_OUTPUT"
               break
             else
@@ -80,6 +83,19 @@ jobs:
         with:
           name: docs
           path: out/doc
+      - name: Mark commit as skipped for deploy
+        if: github.event.pull_request && !env.DOCS_HAVE_CHANGED
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state='success' \
+            -f description='No doc changes detected, preview has not been deployed' \
+            -f context='node-pr-doc-preview/deploy' 
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Test
         run: NODE=$(command -v node) make test-doc-ci TEST_CI_ARGS="-p actions --measure-flakiness 9"
   deploy-preview:
@@ -130,6 +146,7 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
             -f state='success' \
+            -f "target_url='https://github.com/${{ github.repository_owner }}/node-pr-doc-preview/commits/$(git rev-parse HEAD)'"
             -f description='The build succeeded, the preview has been queued for deployment!' \
             -f context='node-pr-doc-preview/deploy' 
         env:
