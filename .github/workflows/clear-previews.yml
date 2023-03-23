@@ -44,7 +44,6 @@ jobs:
           git config user.name "Node.js GitHub Bot"
           git rm -rf "${{ github.event.pull_request.number }}"
           git diff --quiet HEAD || (\
-            git add "${{ github.event.pull_request.number }}" &&\
             git commit -m "Remove preview for ${{ github.event.pull_request.html_url }}" &&\
             git push origin HEAD:gh-pages \
           )
