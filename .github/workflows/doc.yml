@@ -120,3 +120,13 @@ jobs:
               -m "The preview will be available at https://${{ github.repository_owner }}.github.io/node-pr-doc-preview/${{ github.event.pull_request.number }}/api/" &&\
             git push origin HEAD:gh-pages \
           )
+      - name: Mark commit as successfully deployed
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state='success' \
+            -f description='The build succeeded, the preview has been queued for deployment!' \
+            -f context='node-pr-doc-preview/deploy' 
