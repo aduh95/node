@@ -29,6 +29,8 @@ jobs:
       - name: Find the last successful workflow
         if: github.event.action == 'synchronize'
         id: last-successful-run
+        # We want to fetch the minimum number of commits since the docs have
+        # changed. The  variable is initialized to 1 to account for the merge commit.
         run: |
           WORKFLOW_ID=$(gh api /repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .workflow_id)
           NB_OF_COMMITS=1
@@ -43,21 +45,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Compute number of commits to fetch
-        # We want to fetch the minimum number of commits since the docs have
-        # changed or the PR has opened. The +1 is to account for the merge commit.
         id: nb-of-commits
         run: |
           if [ -z "${{ github.event.action }}" ]; then
-            PLUS_ONE=1 # push event, no need for more than 1 commit.
+            NB_OF_COMMITS=1 # push event, no need for more than 1 commit.
           elif [ "${{ github.event.action }}" = "synchronize" ]; then
-            PLUS_ONE=$((${{ steps.last-successful-run.outputs.nbOfCommits }} + 1))
+            NB_OF_COMMITS=${{ steps.last-successful-run.outputs.nbOfCommits }}
           else
-            PLUS_ONE=2 # PR was (re-)open, we only compare with the base
+            NB_OF_COMMITS=2 # PR was (re-)open, we only compare with the base
           fi
-          echo "plusOne=$PLUS_ONE" >> "$GITHUB_OUTPUT"
+          echo "to_fetch=$NB_OF_COMMITS" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v3
         with:
-          fetch-depth: ${{ steps.nb-of-commits.outputs.plusOne }}
+          fetch-depth: ${{ steps.nb-of-commits.outputs.to_fetch }}
           persist-credentials: false
       - name: Use Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v3
