@@ -34,7 +34,7 @@ jobs:
           WORKFLOW_ID=$(gh api /repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .workflow_id)
           NB_OF_COMMITS=1
           for sha in $(gh api /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits --jq 'map(.sha) | reverse | join("\n")'); do
-            NB_OF_COMMITS=$(($NB_OF_COMMITS + 1))
+            (($NB_OF_COMMITS++))
             if [ $(gh api -X GET /repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs -f head_sha=$sha -f status=success --jq .total_count) -gt 0 ]; then
               echo "sha=$sha" >> "$GITHUB_OUTPUT"
               break
@@ -79,7 +79,7 @@ jobs:
           path: out/doc
       - name: Test
         run: NODE=$(command -v node) make test-doc-ci TEST_CI_ARGS="-p actions --measure-flakiness 9"
-  build-preview:
+  deploy-preview:
     needs: build-docs
     if: needs.build-docs.outputs.DOCS_HAVE_CHANGED == 1
     concurrency:
