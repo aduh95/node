@@ -74,4 +74,42 @@ describe('Worker threads do not spawn infinitely', { concurrency: true }, () => 
     assert.strictEqual(code, 0);
     assert.strictEqual(signal, null);
   });
+
+  it('should handle loaders that fork the process', async () => {
+    const { code, signal, stdout, stderr } = await spawnPromisified(execPath, [
+      '--no-warnings',
+      '--require',
+      fixtures.path('printA.js'),
+      '--experimental-loader',
+      `data:text/javascript,import{fork}from"node:child_process";fork(${JSON.stringify(fixtures.path('printB.js'))})`,
+      '--import',
+      fixtures.fileURL('printC.js'),
+      '--input-type=module',
+      '--eval',
+      'setTimeout(() => console.log("D"),99)',
+    ]);
+
+    assert.strictEqual(stderr, '');
+    assert.match(stdout, /^A\r?\nA\r?\n(B\r?\nC|C\r?\nB)\r?\nD\r?\n$/);
+    assert.strictEqual(code, 0);
+    assert.strictEqual(signal, null);
+  });
+
+  it('should handle loaders that fork the process', async () => {
+    const { code, signal, stdout, stderr } = await spawnPromisified(execPath, [
+      '--no-warnings',
+      '--require',
+      fixtures.path('printA.js'),
+      '--import',
+      fixtures.fileURL('printC.js'),
+      '--input-type=module',
+      '--eval',
+      'setTimeout(() => console.log("D"),99)',
+    ], { env: { NODE_OPTIONS: `--experimental-loader data:text/javascript,import{fork}from%22node:child_process%22;fork(${encodeURIComponent(JSON.stringify(fixtures.path('printB.js')))})` } });
+
+    assert.strictEqual(stderr, '');
+    assert.match(stdout, /^A\r?\nA\r?\n(B\r?\nC|C\r?\nB)\r?\nD\r?\n$/);
+    assert.strictEqual(code, 0);
+    assert.strictEqual(signal, null);
+  });
 });
