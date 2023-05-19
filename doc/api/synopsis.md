@@ -73,8 +73,8 @@ server.listen(port, hostname, () => {
 
 Save the file, go back to the terminal window, and enter the following command:
 
-```console
-$ node hello-world.js
+```bash
+node hello-world.js
 ```
 
 Output like this should appear in the terminal:

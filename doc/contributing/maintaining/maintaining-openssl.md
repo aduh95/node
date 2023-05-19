@@ -117,8 +117,8 @@ Check diffs to ensure updates are right. Even if there are no updates in openssl
 sources, `buildinf.h` files will be updated because they have timestamp
 data in them.
 
-```console
-% git diff -- deps/openssl
+```bash
+git diff -- deps/openssl
 ```
 
 _Note_: On Windows, OpenSSL Configure generates a `makefile` that can be
