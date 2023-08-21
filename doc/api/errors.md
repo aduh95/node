@@ -1219,6 +1219,16 @@ The stack trace is extended to include the point in time at which the
 [`v8.startupSnapshot.setDeserializeMainFunction()`][] could not be called
 because it had already been called before.
 
+<a id="ERR_DYNAMIC_IMPORT_SYNTAX_ERROR"></a>
+
+### `ERR_DYNAMIC_IMPORT_SYNTAX_ERROR`
+
+<!--
+added: REPLACEME
+-->
+
+A dynamic `import()` failed because of a {SyntaxError}.
+
 <a id="ERR_ENCODING_INVALID_ENCODED_DATA"></a>
 
 ### `ERR_ENCODING_INVALID_ENCODED_DATA`
