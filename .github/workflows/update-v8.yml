@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install node-core-utils
-        run: npm install -g node-core-utils@latest
+        run: npm install -g @node-core/utils@latest
       - name: Check and download new V8 version
         run: |
             ./tools/dep_updaters/update-v8-patch.sh > temp-output

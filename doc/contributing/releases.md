@@ -563,7 +563,7 @@ ecosystem.
 Use `ncu-ci` to compare `vx.x` run (10) and proposal branch (11)
 
 ```bash
-npm i -g node-core-utils
+npm i -g @node-core/utils
 ncu-ci citgm 10 11
 ```
 
@@ -1064,7 +1064,7 @@ git checkout v1.x-staging
 Next, make sure you have **node-core-utils** installed:
 
 ```bash
-npm i -g node-core-utils
+npm i -g @node-core/utils
 ```
 
 Run the prepare LTS release command:

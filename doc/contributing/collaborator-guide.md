@@ -562,7 +562,7 @@ this tool, please file an issue [to the issue tracker][node-core-utils-issues].
 Quick example:
 
 ```bash
-npm install -g node-core-utils
+npm install -g @node-core/utils
 git node land $PRID
 ```
 

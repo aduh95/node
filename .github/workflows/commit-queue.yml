@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install node-core-utils
-        run: npm install -g node-core-utils@latest
+        run: npm install -g @node-core/utils@latest
 
       - name: Set variables
         run: |
