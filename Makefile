@@ -307,7 +307,10 @@ v8:
 		tools/make-v8.sh $(V8_ARCH).$(BUILDTYPE_LOWER) $(V8_BUILD_OPTIONS)
 
 .PHONY: jstest
-jstest: build-addons build-js-native-api-tests build-node-api-tests ## Runs addon tests and JS tests
+jstest: build-addons build-js-native-api-tests build-node-api-tests jstest-only ## Runs addon tests and JS tests
+
+.PHONY: jstest-only
+jstest-only: 
 	$(PYTHON) tools/test.py $(PARALLEL_ARGS) --mode=$(BUILDTYPE_LOWER) \
 		$(TEST_CI_ARGS) \
 		--skip-tests=$(CI_SKIP_TESTS) \
