@@ -306,10 +306,15 @@ v8:
 	export PATH="$(NO_BIN_OVERRIDE_PATH)" && \
 		tools/make-v8.sh $(V8_ARCH).$(BUILDTYPE_LOWER) $(V8_BUILD_OPTIONS)
 
+.PHONY: jstest-no-addons
+jstest-no-addons: CI_SKIP_TESTS=addons
+jstest-no-addons: jstest-only
+
 .PHONY: jstest
 jstest: build-addons build-js-native-api-tests build-node-api-tests jstest-only ## Runs addon tests and JS tests
 
 .PHONY: jstest-only
+.NOTPARALLEL: jstest-only
 jstest-only: 
 	$(PYTHON) tools/test.py $(PARALLEL_ARGS) --mode=$(BUILDTYPE_LOWER) \
 		$(TEST_CI_ARGS) \
