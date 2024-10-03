@@ -2278,13 +2278,6 @@ function.
 An error occurred while attempting to retrieve the JavaScript `undefined`
 value.
 
-<a id="ERR_NAPI_TSFN_STOP_IDLE_LOOP"></a>
-
-### `ERR_NAPI_TSFN_STOP_IDLE_LOOP`
-
-Once no more items are left in the queue, the idle loop must be suspended. This
-error indicates that the idle loop has failed to stop.
-
 <a id="ERR_NOT_BUILDING_SNAPSHOT"></a>
 
 ### `ERR_NOT_BUILDING_SNAPSHOT`
@@ -3613,6 +3606,22 @@ removed:
 On the main thread, values are removed from the queue associated with the
 thread-safe function in an idle loop. This error indicates that an error
 has occurred when attempting to start the loop.
+
+<a id="ERR_NAPI_TSFN_STOP_IDLE_LOOP"></a>
+
+### `ERR_NAPI_TSFN_STOP_IDLE_LOOP`
+
+<!-- YAML
+added:
+  - v10.6.0
+  - v8.16.0
+removed:
+  - v14.2.0
+  - v12.17.0
+-->
+
+Once no more items are left in the queue, the idle loop must be suspended. This
+error indicates that the idle loop has failed to stop.
 
 <a id="ERR_NO_LONGER_SUPPORTED"></a>
 
