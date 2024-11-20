@@ -23,9 +23,11 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           persist-credentials: false
-      - name: Lint release commit
+      - name: Lint release commit title format
         run: |
           git log -1 HEAD --format=%s | grep -q -E '^\d{4}-\d{2}-\d{2}, Version \d+\.\d+\.\d+ (\(Current|'.+' \(LTS)\)$'
+      - name: Lint release commit message trailers
+        run: |
           git log -1 HEAD --format=%b | git interpret-trailers --parse --no-divider | grep -E -q "^PR-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/[0-9]+$"
       - name: Extract releaser info
         id: releaser-info
@@ -39,3 +41,6 @@ jobs:
             echo "RELEASER=${RELEASER_INFO% prepared by*}"
             echo "PREPARATOR=${RELEASER_INFO#*@}"
           } >> "$GITHUB_OUTPUT"
+      - name: Verify NODE_VERSION_IS_RELEASE bit is correctly set
+        run: |
+          grep -q '^#define NODE_VERSION_IS_RELEASE 1$' src/node_version.h
