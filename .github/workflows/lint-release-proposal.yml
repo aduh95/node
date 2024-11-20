@@ -25,14 +25,15 @@ jobs:
           persist-credentials: false
       - name: Lint release commit title format
         run: |
-          git log -1 HEAD --format=%s | grep -q -E '^\d{4}-\d{2}-\d{2}, Version \d+\.\d+\.\d+ (\(Current|'.+' \(LTS)\)$'
+          git --no-pager log -1 --format=%s
+          git --no-pager log -1 --format=%s | grep -q -E '^\d{4}-\d{2}-\d{2}, Version \d+\.\d+\.\d+ (\(Current|'.+' \(LTS)\)$'
       - name: Lint release commit message trailers
         run: |
-          git log -1 HEAD --format=%b | git interpret-trailers --parse --no-divider | grep -E -q "^PR-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/[0-9]+$"
+          git --no-pager log -1 --format=%b | git interpret-trailers --parse --no-divider | grep -E -q "^PR-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/[0-9]+$"
       - name: Extract releaser info
         id: releaser-info
         run: |
-          COMMIT_SUBJECT="$(git log -1 HEAD --format=%s)"
+          COMMIT_SUBJECT="$(git --no-pager log -1 --format=%s)"
           CHANGELOG_TITLE_INTRO="## $COMMIT_SUBJECT, @"
           CHANGELOG_TITLE="$(grep "$CHANGELOG_TITLE_INTRO" "doc/changelogs/CHANGELOG_V${COMMIT_SUBJECT:20:2}.md")"
           [[ "${CHANGELOG_TITLE%@*}@" == "$CHANGELOG_TITLE_INTRO" ]]
