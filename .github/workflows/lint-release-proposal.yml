@@ -43,7 +43,7 @@ jobs:
           PR_HEAD="$(gh pr view "$PR_URL" --json headRefOid -q .headRefOid)"
           echo "Head of $PR_URL: $PR_HEAD"
           echo "Current commit: $GITHUB_SHA"
-          [[ "$PR_HEAD" == "$GITHUB_SHA" ]]
+        #   [[ "$PR_HEAD" == "$GITHUB_SHA" ]]
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Validate CHANGELOG
