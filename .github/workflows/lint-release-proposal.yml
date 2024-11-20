@@ -40,7 +40,7 @@ jobs:
           echo "$ACTUAL" | grep -E -q "$EXPECTED_TRAILER"
 
           PR_URL="${ACTUAL:8}"
-          PR_HEAD=$(gh pr view --json headRefOid -q .headRefOid "$PR-URL")
+          PR_HEAD="$(gh pr view "$PR_URL" --json headRefOid -q .headRefOid)"
           echo "Head of $PR_URL: $PR_HEAD"
           echo "Current commit: $GITHUB_SHA"
           [[ "$PR_HEAD" == "$GITHUB_SHA" ]]
