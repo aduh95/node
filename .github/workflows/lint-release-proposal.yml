@@ -25,11 +25,10 @@ jobs:
           persist-credentials: false
       - name: Lint release commit title format
         run: |
-          git --no-pager log -1 --format=%s
-          git --no-pager log -1 --format=%s | grep -q -E '^\d{4}-\d{2}-\d{2}, Version \d+\.\d+\.\d+ (\(Current|'.+' \(LTS)\)$'
+          git --no-pager log -1 --format=%s | grep -q -E '^[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}, Version [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+ (\(Current|'.+' \(LTS)\)$'
       - name: Lint release commit message trailers
         run: |
-          git --no-pager log -1 --format=%b | git interpret-trailers --parse --no-divider | grep -E -q "^PR-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/[0-9]+$"
+          git --no-pager log -1 --format=%b | git interpret-trailers --parse --no-divider | grep -E -q "^PR-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/[[:digit:]]+$"
       - name: Extract releaser info
         id: releaser-info
         run: |
