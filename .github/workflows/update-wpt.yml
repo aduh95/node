@@ -57,22 +57,25 @@ jobs:
 
       - name: Retrieve new version commit
         run: |
-          echo "new_version=$(
+          new_version="$(
             node -p 'require("./test/fixtures/wpt/versions.json")[process.argv[1]].commit' "$SUBSYSTEM"
-          )" >> "$GITHUB_ENV"
-        env:
-          SUBSYSTEM: ${{ matrix.subsystem }}
+          )"
+          {
+            echo "long_version=$new_version"
+            echo "short_version=${new_version:0:10}"
+          } >> "$GITHUB_ENV"
 
       - name: Open or update PR for the subsystem update
         uses: gr2m/create-or-update-pull-request-action@77596e3166f328b24613f7082ab30bf2d93079d5
         with:
           branch: actions/update-wpt-${{ matrix.subsystem }}
           author: Node.js GitHub Bot <github-bot@iojs.org>
-          title: 'test: update WPT for ${{ matrix.subsystem }} to ${{ env.new_version }}'
-          commit-message: 'test: update WPT for ${{ matrix.subsystem }} to ${{ env.new_version }}'
+          title: 'test: update WPT for ${{ matrix.subsystem }} to ${{ env.short_version }}'
+          commit-message: 'test: update WPT for ${{ matrix.subsystem }} to ${{ env.short_version }}'
           labels: test
           update-pull-request-title-and-body: true
-          body: |
-            This is an automated update of the WPT for ${{ matrix.subsystem }} to ${{ env.new_version }}.
+          body: >
+            This is an automated update of the WPT for ${{ matrix.subsystem }} to
+            https://github.com/web-platform-tests/wpt/commit/${{ env.long_version }}.
         env:
           GITHUB_TOKEN: ${{ secrets.GH_USER_TOKEN }}
