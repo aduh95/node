@@ -46,7 +46,7 @@ jobs:
           ncu-config set owner "${GITHUB_REPOSITORY_OWNER}"
           ncu-config set repo "$(echo "$GITHUB_REPOSITORY" | cut -d/ -f2)"
         env:
-          USERNAME: ${{ secrets.JENKINS_USER || github.actor }}
+          USERNAME: ${{ secrets.JENKINS_USER }}
           GH_TOKEN: ${{ secrets.GH_USER_TOKEN }}
 
       - name: Update WPT for subsystem ${{ matrix.subsystem }}
