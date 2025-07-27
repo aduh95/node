@@ -38,7 +38,6 @@ const supportedApis = [
   ...syncAndAsyncAPI('open'),
   'openAsBlob',
   ...syncAndAsyncAPI('mkdtemp'),
-  'mkdtempDisposableSync',
   ...syncAndAsyncAPI('readdir'),
   ...syncAndAsyncAPI('readFile'),
   ...syncAndAsyncAPI('readlink'),
