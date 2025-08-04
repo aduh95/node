@@ -239,6 +239,7 @@ Consult previous versions of this document for older versions of Node.js:
 
 Installation via Linux package manager can be achieved with:
 
+* Nix, NixOS: `nix-shell`
 * Ubuntu, Debian: `sudo apt-get install python3 g++-12 gcc-12 make python3-pip`
 * Fedora: `sudo dnf install python3 gcc-c++ make python3-pip`
 * CentOS and RHEL: `sudo yum install python3 gcc-c++ make python3-pip`
@@ -259,6 +260,16 @@ installed, you can find them under the menu `Xcode -> Open Developer Tool ->
 More Developer Tools...`. This step will install `clang`, `clang++`, and
 `make`.
 
+#### Nix integration
+
+If you are using Nix and direnv, you can use the following to get started:
+
+```
+echo 'use_nix --attr sharedLibDeps {}' > .envrc
+direnv allow .
+make build-ci -j12
+```
+
 #### Building Node.js
 
 If the path to your build directory contains a space, the build will likely
@@ -267,7 +278,6 @@ fail.
 To build Node.js:
 
 ```bash
-export CXX=g++-12
 ./configure
 make -j4
 ```
