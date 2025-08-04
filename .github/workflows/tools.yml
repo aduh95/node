@@ -30,6 +30,7 @@ on:
           - llhttp
           - minimatch
           - nbytes
+          - nixpkgs-unstable
           - nghttp2
           - nghttp3
           - ngtcp2
@@ -195,6 +196,14 @@ jobs:
             label: dependencies
             run: |
               ./tools/dep_updaters/update-nbytes.sh > temp-output
+              cat temp-output
+              tail -n1 temp-output | grep "NEW_VERSION=" >> "$GITHUB_ENV" || true
+              rm temp-output
+          - id: nixpkgs-unstable
+            subsystem: tools
+            label: tools
+            run: |
+              ./tools/dep_updaters/update-nixpkgs-pin.sh > temp-output
               cat temp-output
               tail -n1 temp-output | grep "NEW_VERSION=" >> "$GITHUB_ENV" || true
               rm temp-output
