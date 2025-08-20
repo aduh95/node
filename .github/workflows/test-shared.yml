@@ -27,7 +27,7 @@ concurrency:
 env:
   FLAKY_TESTS: keep_retrying
   NIXPKGS_REPO: https://github.com/NixOS/nixpkgs
-  NIXPKGS_PIN: d74de548348c46cf25cb1fcc4b74f38103a4590d
+  NIXPKGS_PIN: 97eb7ee0da337d385ab015a23e15022c865be75c
 
 permissions:
   contents: read
