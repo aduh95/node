@@ -91,7 +91,6 @@ pkgs.mkShell {
   shellHook = if (ccache != null) then ''
     export CC="${pkgs.lib.getExe ccache} $CC"
     export CXX="${pkgs.lib.getExe ccache} $CXX"
-    ls "${pkgs.lib.getLib sharedLibDeps.uvwasi}"
   '' else "";
 
   BUILD_WITH = if (ninja != null) then "ninja" else "make";
