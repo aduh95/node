@@ -216,8 +216,12 @@ jobs:
                   -- ${{ inputs.category }} \
                 | tee /dev/stderr \
                 > ${{ matrix.system }}.csv
+                echo 'Benchmark results:'
+                echo
+                echo '```'
                 Rscript benchmark/compare.R < ${{ matrix.system }}.csv
-            '
+                echo '```'
+            ' | tee /dev/stderr >> "$GITHUB_STEP_SUMMARY"
         env:
           FILTER: ${{ inputs.filter }}
 
@@ -264,5 +268,9 @@ jobs:
             --arg sharedLibDeps '{}' \
             --arg devTools '[]' \
             --run '
+                echo 'Benchmark results:'
+                echo
+                echo '```'
                 awk "FNR==1 && NR!=1{next;}{print}" raw-results/*.csv | Rscript benchmark/compare.R
-            '
+                echo '```'
+            ' | tee /dev/stderr >> "$GITHUB_STEP_SUMMARY"
