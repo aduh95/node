@@ -2,7 +2,7 @@
 
 // This test verifies that `--trace-gc` flag is well integrated.
 // We'll check here, that the console outputs gc events properly.
-require('../common');
+const common = require('../common');
 
 const assert = require('assert');
 const { spawnSync } = require('child_process');
@@ -21,10 +21,10 @@ const fixtures = require('../common/fixtures');
   const scavengeRegex = /\bScavenge\b/;
   const eofRegex = /\bMark-Compact\b/;
 
-  lines.forEach((line, index) => {
+  lines.forEach(common.mustCallAtLeast((line, index) => {
     const expected = index !== lines.length - 1 ? scavengeRegex : eofRegex;
     assert.match(line, expected);
-  });
+  }));
 }
 
 /**

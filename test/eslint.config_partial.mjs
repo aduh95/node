@@ -126,6 +126,7 @@ export default [
       'node-core/eslint-check': 'error',
       'node-core/async-iife-no-unused-result': 'error',
       'node-core/inspector-check': 'error',
+      'node-core/must-call-assert': 'error',
       // `common` module is mandatory in tests.
       'node-core/required-modules': [
         'error',
@@ -152,6 +153,7 @@ export default [
           objects: 'only-multiline',
         },
       ],
+      'node-core/must-call-assert': 'off',
     },
   },
   {
