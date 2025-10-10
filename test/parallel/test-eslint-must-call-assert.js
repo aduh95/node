@@ -54,13 +54,17 @@ tester.run('must-call-assert', rule, {
     process.nextTick(() => {
       assert.ok(String);
     });
+    Promise.all([val1, val2].map(v => assert.rejects(import(v), /Error/))).then(common.mustCall());
     `,
     `
     import test from 'node:test';
     import assert from 'node:assert';
 
-    test("whatever", () => {
+    test("whatever", async (t) => {
       assert.strictEqual(2+2, 5);
+      await t.test('blah', () => {
+        assert.ok(global);
+      });
     });
     `,
     `

@@ -1,6 +1,6 @@
 'use strict';
 
-require('../common');
+const common = require('../common');
 const { spawnSyncAndAssert } = require('../common/child_process');
 const fixtures = require('../common/fixtures');
 const assert = require('assert');
@@ -17,11 +17,11 @@ const assert = require('assert');
       signal: null,
       status: 0,
       trim: true,
-      stdout(output) {
+      stdout: common.mustCall((output) => {
         assert.match(output, /Start c/);
         assert.match(output, /dynamic import b\.mjs failed.*ERR_REQUIRE_CYCLE_MODULE/);
         assert.match(output, /dynamic import d\.mjs failed.*ERR_REQUIRE_CYCLE_MODULE/);
-      }
+      }),
     }
   );
 }

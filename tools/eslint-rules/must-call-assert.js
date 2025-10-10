@@ -7,6 +7,14 @@ const message =
 const requireCall = 'CallExpression[callee.name="require"]';
 const assertModuleSpecifier = '/^(node:)?assert(.strict)?$/';
 
+function isPromiseDotAll(node) {
+  if (node.type !== 'CallExpression') return false;
+  const { type, object, property } = node.callee;
+  return type === 'MemberExpression' &&
+         object.type === 'Identifier' && object.name === 'Promise' &&
+         property.type === 'Identifier' && property.name === 'all';
+}
+
 function findEnclosingFunction(node) {
   while (true) {
     node = node.parent;
@@ -20,7 +28,9 @@ function findEnclosingFunction(node) {
       if (
         node.parent.callee.type === 'MemberExpression' &&
         (node.parent.callee.object.type === 'ArrayExpression' || node.parent.callee.object.type === 'Identifier') &&
-        node.parent.callee.property.name === 'forEach'
+        (node.parent.callee.property.name === 'forEach' || (
+          node.parent.callee.property.name === 'map' && isPromiseDotAll(node.parent.parent)
+        ))
       ) continue; // `[].forEach()` call
     } else if (node.parent?.type === 'NewExpression') {
       if (node.parent.callee.type === 'Identifier' && node.parent.callee.name === 'Promise') continue;
@@ -68,6 +78,7 @@ module.exports = {
                       parent.arguments[0].type === 'Literal' &&
                       parent.arguments[0].value === 'exit'
                     ),
+                  t: (name) => name === 'test' && parent.parent.type === 'AwaitExpression', // await t.test
                 }[parent.callee.object.name]?.(parent.callee.property.name)
               ) {
                 return;

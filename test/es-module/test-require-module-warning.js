@@ -1,7 +1,7 @@
 'use strict';
 
 // This checks the warning and the stack trace emitted by --trace-require-module=all.
-require('../common');
+const common = require('../common');
 const { spawnSyncAndAssert } = require('../common/child_process');
 const fixtures = require('../common/fixtures');
 const assert = require('assert');
@@ -12,7 +12,7 @@ spawnSyncAndAssert(process.execPath, [
   fixtures.path('es-modules', 'require-module.js'),
 ], {
   trim: true,
-  stderr(output) {
+  stderr: common.mustCall((output) => {
     const lines = output.split('\n');
     assert.match(
       lines[0],
@@ -30,7 +30,7 @@ spawnSyncAndAssert(process.execPath, [
       lines[3],
       /at Object\.<anonymous> \(.*require-module\.js:1:1\)/
     );
-  }
+  }),
 });
 
 spawnSyncAndAssert(process.execPath, [

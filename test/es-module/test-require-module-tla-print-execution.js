@@ -15,7 +15,7 @@ const fixtures = require('../common/fixtures');
   ], {
     signal: null,
     status: 1,
-    stderr(output) {
+    stderr: common.mustCall((output) => {
       assert.match(output, /I am executed/);
       common.expectRequiredTLAError(output);
       assert.match(output, /Error: unexpected top-level await at.*execution\.mjs:3/);
@@ -23,7 +23,7 @@ const fixtures = require('../common/fixtures');
       assert.match(output, /From .*require-execution\.js/);
       assert.match(output, /Requiring .*execution\.mjs/);
       return true;
-    },
+    }),
     stdout: ''
   });
 }

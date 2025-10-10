@@ -14,13 +14,13 @@ const fixtures = require('../common/fixtures');
   ], {
     signal: null,
     status: 1,
-    stderr(output) {
+    stderr: common.mustCall((output) => {
       assert.doesNotMatch(output, /I am executed/);
       common.expectRequiredTLAError(output);
       assert.match(output, /From .*require-execution\.js/);
       assert.match(output, /Requiring .*execution\.mjs/);
       return true;
-    },
+    }),
     stdout: ''
   });
 }
