@@ -163,7 +163,7 @@ jobs:
             --arg benchmarkTools '[]' \
             ${{ endsWith(matrix.system, '-darwin') && '--arg extraConfigFlags ''["--without-inspector"]'' \' || '\' }}
             --run '
-                make -C "$TAR_DIR" ${{ github.event_name == 'workflow_dispatch' && 'build' || 'run' }}-ci -j4 V=1 TEST_CI_ARGS="-p actions --measure-flakiness 9 --skip-tests=$CI_SKIP_TESTS"
+                make ${{ github.event_name == 'workflow_dispatch' && 'build' || '-C "$TAR_DIR" run' }}-ci -j4 V=1 TEST_CI_ARGS="-p actions --measure-flakiness 9 --skip-tests=$CI_SKIP_TESTS"
             '
 
       - name: Re-build Node.js on the merge commit
