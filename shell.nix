@@ -9,7 +9,6 @@
       brotli
       c-ares
       libuv
-      nghttp2
       nghttp3
       ngtcp2
       openssl
@@ -21,6 +20,16 @@
       zstd
       ;
     http-parser = pkgs.llhttp;
+    nghttp2 = pkgs.nghttp2.overrideAttrs {
+      patches = [
+        (pkgs.fetchpatch2 {
+          url = "https://github.com/nghttp2/nghttp2/commit/7784fa979d0bcf801a35f1afbb25fb048d815cd7.patch?full_index=1";
+          revert = true;
+          excludes = [ "lib/includes/nghttp2/nghttp2.h" ];
+          hash = "sha256-RG87Qifjpl7HTP9ac2JwHj2XAbDlFgOpAnpZX3ET6gU=";
+        })
+      ];
+    };
   },
   ccache ? pkgs.ccache,
   ninja ? pkgs.ninja,
