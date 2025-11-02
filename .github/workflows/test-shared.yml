@@ -150,6 +150,17 @@ jobs:
           mkdir tools
           mv "$TAR_DIR"/tools/nix tools/.
 
+      - name: Cache nix-shell
+        run: |
+          nix-store --query --references $(
+            nix-instantiate \
+              -I nixpkgs=./tools/nix/pkgs.nix \
+              --arg ccache '(import <nixpkgs> {}).sccache' \
+              --arg devTools '[]' \
+              --arg benchmarkTools '[]' \
+              shell.nix
+          ) | xargs nix-store --realise | xargs nix-store --query --requisites | cachix push mycache
+
       - name: Build Node.js and run tests
         run: |
           nix-shell \
@@ -164,3 +175,4 @@ jobs:
             --run '
                 make -C "$TAR_DIR" run-ci -j4 V=1 TEST_CI_ARGS="-p actions --measure-flakiness 9 --skip-tests=$CI_SKIP_TESTS"
             '
+
