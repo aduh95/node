@@ -1,5 +1,6 @@
 {
   pkgs ? import ./pkgs.nix { },
+  withTemporal ? false,
 }:
 {
   inherit (pkgs)
@@ -45,3 +46,21 @@
     ];
   });
 }
+// (pkgs.lib.optionalAttrs withTemporal {
+  temporal_capi =
+    import
+      (builtins.fetchurl {
+        url = "https://github.com/NixOS/nixpkgs/raw/c2247d3f04fe4da90a09244acc1df2f8b3dd6cfa/pkgs/by-name/te/temporal_capi/package.nix";
+        sha256 = "1igiqjsw7jnb15xy0a5jq7z1wrpypflv37qidq056vsd1p2fks69";
+      })
+      {
+        inherit (pkgs)
+          lib
+          stdenv
+          rustPlatform
+          fetchFromGitHub
+          nix-update-script
+          testers
+          ;
+      };
+})
