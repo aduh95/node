@@ -19,7 +19,5 @@ common.expectWarning(
   'It returns a Promise instead.', 'DEP0132');
 
 w.on('message', common.mustCall(() => {
-  setTimeout(() => {
-    w.terminate(common.mustCall()).then(common.mustCall());
-  }, 1);
+  setTimeout(common.mustCall(() => w.terminate().then(common.mustCall())), 1);
 }));
