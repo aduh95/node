@@ -154,7 +154,7 @@ jobs:
         run: |
           nix-shell -I nixpkgs=./tools/nix/pkgs.nix -p 'nixfmt-tree' --run '
             treefmt --quiet --fail-on-change
-          ' || git --no-pager diff --exit-code
+          ' /dev/null || git --no-pager diff --exit-code
 
   lint-py:
     if: github.event.pull_request.draft == false
