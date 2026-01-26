@@ -16,12 +16,10 @@
       'target_name': 'd8',
       'type': 'executable',
       'dependencies': [
-        'abseil.gyp:abseil',
         'v8.gyp:v8',
         'v8.gyp:v8_libbase',
         'v8.gyp:v8_libplatform',
         'v8.gyp:generate_bytecode_builtins_list',
-        'v8.gyp:fp16',
       ],
       # Generated source files need this explicitly:
       'include_dirs+': [
@@ -33,6 +31,12 @@
         '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "v8_executable.\\"d8\\".*?sources = ")',
       ],
       'conditions': [
+        ['node_use_bundled_v8_third_party!="false"', {
+          'dependencies': [
+            'abseil.gyp:abseil',
+            'v8.gyp:fp16',
+          ],
+        }],
         [ 'want_separate_host_toolset==1', {
           'toolsets': [ 'target', ],
           'dependencies': [

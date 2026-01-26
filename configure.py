@@ -1090,6 +1090,13 @@ parser.add_argument('--without-bundled-v8',
     help='do not use V8 includes from the bundled deps folder. ' +
          '(This mode is not officially supported for regular applications)')
 
+shared_optgroup.add_argument('--without-bundled-v8-third_party',
+    action='store_true',
+    dest='without_bundled_v8_third_party',
+    default=None,
+    help='do not use V8 third-party from the bundled deps folder. ' +
+         '(This mode is not officially supported for regular applications)')
+
 parser.add_argument('--verbose',
     action='store_true',
     dest='verbose',
@@ -2059,6 +2066,7 @@ def configure_v8(o, configs):
   o['variables']['v8_trace_maps'] = 1 if options.trace_maps else 0
   o['variables']['node_use_v8_platform'] = b(not options.without_v8_platform)
   o['variables']['node_use_bundled_v8'] = b(not options.without_bundled_v8)
+  o['variables']['node_use_bundled_v8_third_party'] = b(not (options.without_bundled_v8 or options.without_bundled_v8_third_party))
   o['variables']['force_dynamic_crt'] = 1 if options.shared else 0
   o['variables']['node_enable_d8'] = b(options.enable_d8)
   o['variables']['node_enable_v8windbg'] = b(options.enable_v8windbg)
@@ -2070,6 +2078,12 @@ def configure_v8(o, configs):
     if options.enable_v8windbg:
       raise Exception('--enable-v8windbg is incompatible with --without-bundled-v8.')
     (pkg_libs, pkg_cflags, pkg_libpath, _) = pkg_config("v8")
+    if pkg_libs and pkg_libpath:
+      output['libraries'] += [pkg_libpath] + pkg_libs.split()
+    if pkg_cflags:
+      output['include_dirs'] += [flag for flag in [flag.strip() for flag in pkg_cflags.split('-I')] if flag]
+  if options.without_bundled_v8_third_party:
+    (pkg_libs, pkg_cflags, pkg_libpath, _) = pkg_config("v8-third_party")
     if pkg_libs and pkg_libpath:
       output['libraries'] += [pkg_libpath] + pkg_libs.split()
     if pkg_cflags:

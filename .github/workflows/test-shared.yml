@@ -32,6 +32,14 @@ on:
       - deps/sqlite/**
       - deps/uv/**
       - deps/uvwasi/**
+      - deps/v8/third_party/abseil-cpp/**
+      - deps/v8/third_party/dragonbox/**
+      - deps/v8/third_party/fast_float/**
+      - deps/v8/third_party/fp16/**
+      - deps/v8/third_party/googletest/**
+      - deps/v8/third_party/highway/**
+      - deps/v8/third_party/simdutf/**
+      - deps/v8/third_party/zlib/**
       - deps/zlib/**
       - deps/zstd/**
       - doc/**
@@ -82,6 +90,14 @@ on:
       - deps/sqlite/**
       - deps/uv/**
       - deps/uvwasi/**
+      - deps/v8/third_party/abseil-cpp/**
+      - deps/v8/third_party/dragonbox/**
+      - deps/v8/third_party/fast_float/**
+      - deps/v8/third_party/fp16/**
+      - deps/v8/third_party/googletest/**
+      - deps/v8/third_party/highway/**
+      - deps/v8/third_party/simdutf/**
+      - deps/v8/third_party/zlib/**
       - deps/zlib/**
       - deps/zstd/**
       - doc/**

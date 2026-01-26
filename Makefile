@@ -1234,6 +1234,18 @@ ifeq ($(SKIP_SHARED_DEPS), 1)
 	$(RM) -r $(TARNAME)/deps/sqlite
 	$(RM) -r $(TARNAME)/deps/uv
 	$(RM) -r $(TARNAME)/deps/uvwasi
+	find $(TARNAME)/deps/v8/third_party -maxdepth 1 -type f -exec $(RM) {} +
+	find $(TARNAME)/deps/v8/third_party -mindepth 1 -maxdepth 1 -type d \
+	  -not -name inspector_protocol \
+	  -not -name jinja2 \
+	  -not -name markupsafe \
+	  -not -name rapidhash-v8 \
+	  -not -name siphash \
+	  -not -name utf8-decoder \
+	  -not -name valgrind \
+	  -not -name v8 \
+	  -not -name wasm-api \
+	  -exec $(RM) -r {} +
 	$(RM) -r $(TARNAME)/deps/zlib
 	$(RM) -r $(TARNAME)/deps/zstd
 else

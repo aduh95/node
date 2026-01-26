@@ -32,6 +32,7 @@
     'node_snapshot_main%': '',
     'node_use_amaro%': 'true',
     'node_use_bundled_v8%': 'true',
+    'node_use_bundled_v8_third_party%': 'true',
     'node_use_lief%': 'false',
     'node_use_node_snapshot%': 'false',
     'node_use_openssl%': 'true',
@@ -955,7 +956,7 @@
             'src/node_snapshot_stub.cc',
           ]
         }],
-        [ 'node_use_bundled_v8!="false"', {
+        [ 'node_use_bundled_v8_third_party!="false"', {
           'dependencies': [ 'tools/v8_gypfiles/abseil.gyp:abseil' ],
         }],
         [ 'node_shared_gtest=="false"', {
@@ -1311,7 +1312,7 @@
         [ 'node_shared_gtest=="true"', {
           'libraries': [ '-lgtest_main' ],
         }],
-        [ 'node_use_bundled_v8!="false"', {
+        [ 'node_use_bundled_v8_third_party!="false"', {
           'dependencies': [ 'tools/v8_gypfiles/abseil.gyp:abseil' ],
         }],
         [ 'node_shared_hdr_histogram=="false"', {
@@ -1552,7 +1553,7 @@
         [ 'OS=="mac"', {
           'libraries': [ '-framework CoreFoundation -framework Security' ],
         }],
-        [ 'node_shared_simdutf=="false" and node_use_bundled_v8!="false"', {
+        [ 'node_shared_simdutf=="false" and node_use_bundled_v8_third_party!="false"', {
           'dependencies': [ 'tools/v8_gypfiles/v8.gyp:simdutf#host' ],
         }],
         [ 'node_shared_libuv=="false"', {

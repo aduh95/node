@@ -8,7 +8,7 @@
 
 let
   nodejs = pkgs.nodejs-slim_latest;
-  v8Dir = ../../deps/v8;
+  v8Dir = pkgs.lib.fileset.difference ../../deps/v8 ../../deps/v8/third_party;
 
   version =
     let
@@ -36,27 +36,38 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
     in
     fileset.toSource {
       root = ../../.;
-      fileset = fileset.unions [
-        ../../common.gypi
-        ../../configure
-        ../../configure.py
-        ../../deps/inspector_protocol/inspector_protocol.gyp
-        ../../deps/ncrypto/ncrypto.gyp
-        v8Dir
-        ../../node.gyp
-        ../../node.gypi
-        ../../src/inspector/node_inspector.gypi
-        ../../src/node_version.h
-        ../../tools/configure.d
-        ../../tools/getmoduleversion.py
-        ../../tools/getnapibuildversion.py
-        ../../tools/gyp
-        ../../tools/gyp_node.py
-        ../../tools/icu/icu_versions.json
-        ../../tools/icu/icu-system.gyp
-        ../../tools/utils.py
-        ../../tools/v8_gypfiles
-      ];
+      fileset = fileset.unions (
+        [
+          ../../common.gypi
+          ../../configure
+          ../../configure.py
+          ../../deps/inspector_protocol/inspector_protocol.gyp
+          ../../deps/ncrypto/ncrypto.gyp
+          v8Dir
+          ../../deps/v8/third_party/inspector_protocol
+          ../../deps/v8/third_party/jinja2
+          ../../deps/v8/third_party/markupsafe
+          ../../deps/v8/third_party/rapidhash-v8
+          ../../deps/v8/third_party/siphash
+          ../../deps/v8/third_party/utf8-decoder
+          ../../deps/v8/third_party/v8
+          ../../deps/v8/third_party/wasm-api
+          ../../node.gyp
+          ../../node.gypi
+          ../../src/inspector/node_inspector.gypi
+          ../../src/node_version.h
+          ../../tools/configure.d
+          ../../tools/getmoduleversion.py
+          ../../tools/getnapibuildversion.py
+          ../../tools/gyp
+          ../../tools/gyp_node.py
+          ../../tools/icu/icu_versions.json
+          ../../tools/icu/icu-system.gyp
+          ../../tools/utils.py
+          ../../tools/v8_gypfiles
+        ]
+        ++ pkgs.lib.optional pkgs.stdenv.buildPlatform.isx86 ../../deps/v8/third_party/valgrind
+      );
     };
 
   # We need to patch tools/gyp/ to work from within Nix sandbox

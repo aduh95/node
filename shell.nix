@@ -47,7 +47,12 @@ let
 
   needsRustCompiler = withTemporal && !builtins.hasAttr "temporal_capi" sharedLibDeps;
 
-  buildInputs = builtins.attrValues sharedLibDeps ++ pkgs.lib.optional useSharedICU icu;
+  buildInputs =
+    builtins.attrValues sharedLibDeps
+    ++ pkgs.lib.optional useSharedICU icu
+    ++ pkgs.lib.optional (useSeparateDerivationForV8 != false) (
+      pkgs.callPackage ./tools/nix/v8-third_party { }
+    );
   configureFlags = [
     (
       if icu == null then
@@ -57,6 +62,7 @@ let
     )
   ]
   ++ extraConfigFlags
+  ++ pkgs.lib.optional (useSeparateDerivationForV8 != false) "--without-bundled-v8-third_party"
   ++ pkgs.lib.optional (!withAmaro) "--without-amaro"
   ++ pkgs.lib.optional (!withLief) "--without-lief"
   ++ pkgs.lib.optional withQuic "--experimental-quic"

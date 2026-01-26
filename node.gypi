@@ -234,7 +234,7 @@
         'dependencies': [ 'deps/simdjson/simdjson.gyp:simdjson' ],
     }],
 
-    [ 'node_shared_simdutf=="false" and node_use_bundled_v8!="false"', {
+    [ 'node_shared_simdutf=="false" and node_use_bundled_v8_third_party!="false"', {
         'dependencies': [ 'tools/v8_gypfiles/v8.gyp:simdutf' ],
     }],
 
