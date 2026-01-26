@@ -8,6 +8,7 @@
 }:
 {
   inherit (pkgs)
+    abseil-cpp
     ada
     brotli
     gtest

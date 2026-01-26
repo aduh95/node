@@ -286,10 +286,14 @@
         'v8_initializers',
         'v8_maybe_icu',
         'fp16',
-        'abseil.gyp:abseil',
       ],
       'sources': [
         '<(V8_ROOT)/src/init/setup-isolate-full.cc',
+      ],
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
       ],
     },  # v8_init
     {
@@ -303,7 +307,6 @@
         'generate_bytecode_builtins_list',
         'run_torque',
         'fp16',
-        'abseil.gyp:abseil',
       ],
       'cflags!': ['-O3'],
       'cflags': ['-O1'],
@@ -314,6 +317,9 @@
         '<(SHARED_INTERMEDIATE_DIR)/torque-generated/src/builtins/wasm-to-js-tq-csa.cc',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['v8_enable_i18n_support==1', {
           'dependencies': [
             '<(icu_gyp_path):icui18n',
@@ -337,7 +343,6 @@
         'v8_shared_internal_headers',
         'v8_pch',
         'fp16',
-        'abseil.gyp:abseil',
       ],
       'include_dirs': [
         '<(SHARED_INTERMEDIATE_DIR)',
@@ -347,6 +352,9 @@
         '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "\\"v8_initializers.*?sources = ")',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['v8_enable_webassembly==1', {
           'dependencies': [
             'v8_initializers_slow',
@@ -534,7 +542,6 @@
             'v8_compiler_for_mksnapshot',
             'v8_initializers',
             'v8_libplatform',
-            'abseil.gyp:abseil',
             'fp16',
           ]
         }, {
@@ -548,9 +555,11 @@
             'v8_compiler_for_mksnapshot',
             'v8_initializers',
             'v8_libplatform',
-            'abseil.gyp:abseil',
             'fp16',
           ]
+        }],
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
         }],
         ['OS=="win" and clang==1', {
           'actions': [
@@ -664,7 +673,6 @@
         'run_torque',
         'v8_libbase',
         'fp16',
-        'abseil.gyp:abseil',
       ],
       'direct_dependent_settings': {
         'sources': [
@@ -896,6 +904,11 @@
           }],
         ],
       },
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
+      ],
     },  # v8_internal_headers
     {
       'target_name': 'v8_compiler_sources',
@@ -998,9 +1011,11 @@
         'v8_shared_internal_headers',
         'v8_pch',
         'fp16',
-        'abseil.gyp:abseil',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['v8_enable_maglev==0', {
           'sources': [
             '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "v8_header_set.\\"v8_internal_headers\\".*?!v8_enable_maglev.*?sources \\+= ")',
@@ -1116,7 +1131,6 @@
         'fp16',
         'highway',
         'simdutf',
-        'abseil.gyp:abseil',
       ],
       'includes': ['inspector.gypi'],
       'direct_dependent_settings': {
@@ -1133,6 +1147,9 @@
         '<@(inspector_all_sources)',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['v8_enable_snapshot_compression==1', {
           'sources': [
             '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "\\"v8_base_without_compiler.*?v8_enable_snapshot_compression.*?sources \\+= ")',
@@ -1411,12 +1428,16 @@
       'dependencies': [
         'v8_shared_internal_headers',
         'v8_libbase',
-        'abseil.gyp:abseil',
       ],
       'defines!': [
         '_HAS_EXCEPTIONS=0',
         'BUILDING_V8_SHARED=1',
         'BUILDING_V8_PLATFORM_SHARED=1',
+      ],
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': ['-fexceptions'],
@@ -1467,10 +1488,12 @@
 
       'dependencies': [
         'v8_headers',
-        'abseil.gyp:abseil',
       ],
 
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['is_component_build', {
           'defines': ["BUILDING_V8_BASE_SHARED"],
         }],
@@ -1716,12 +1739,14 @@
       'toolsets': ['host', 'target'],
       'dependencies': [
         'v8_libbase',
-        'abseil.gyp:abseil',
       ],
       'sources': [
         '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "\\"v8_libplatform.*?sources = ")',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['component=="shared_library"', {
           'direct_dependent_settings': {
             'defines': ['USING_V8_PLATFORM_SHARED'],
@@ -1789,7 +1814,6 @@
       ],
       'dependencies': [
         'v8_libbase',
-        'abseil.gyp:abseil',
         # "build/win:default_exe_manifest",
       ],
       'sources': [
@@ -1799,6 +1823,11 @@
         "<(V8_ROOT)/src/interpreter/bytecode-traits.h",
         "<(V8_ROOT)/src/interpreter/bytecodes.cc",
         "<(V8_ROOT)/src/interpreter/bytecodes.h",
+      ],
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
       ],
     },  # bytecode_builtins_list_generator
     {
@@ -1813,7 +1842,6 @@
         'v8_maybe_icu',
         'v8_pch',
         'fp16',
-        'abseil.gyp:abseil',
         # "build/win:default_exe_manifest",
       ],
       'sources': [
@@ -1838,6 +1866,9 @@
         },
       },
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['want_separate_host_toolset', {
           'toolsets': ['host'],
         }],
@@ -1852,10 +1883,12 @@
       'type': 'executable',
       'dependencies': [
         'torque_base',
-        'abseil.gyp:abseil',
         # "build/win:default_exe_manifest",
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['want_separate_host_toolset', {
           'toolsets': ['host'],
         }],
@@ -1930,9 +1963,11 @@
         'v8_libbase',
         # "build/win:default_exe_manifest",
         'v8_maybe_icu',
-        'abseil.gyp:abseil',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         ['want_separate_host_toolset', {
           'toolsets': ['host'],
         }],

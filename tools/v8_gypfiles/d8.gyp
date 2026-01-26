@@ -16,7 +16,6 @@
       'target_name': 'd8',
       'type': 'executable',
       'dependencies': [
-        'abseil.gyp:abseil',
         'v8.gyp:v8',
         'v8.gyp:v8_libbase',
         'v8.gyp:v8_libplatform',
@@ -33,6 +32,9 @@
         '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "v8_executable.\\"d8\\".*?sources = ")',
       ],
       'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
         [ 'want_separate_host_toolset==1', {
           'toolsets': [ 'target', ],
           'dependencies': [

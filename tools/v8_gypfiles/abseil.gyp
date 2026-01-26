@@ -1,9 +1,12 @@
 {
   'includes': ['toolchain.gypi'],
+  'variables': {
+    'node_shared_abseil%': 'false',
+  },
   'targets': [
     {
       'target_name': 'abseil',
-      'type': 'static_library',
+      'type': '<(library)',
       'toolsets': ['host', 'target'],
       'variables': {
         'ABSEIL_ROOT': '../../deps/v8/third_party/abseil-cpp',
@@ -19,7 +22,9 @@
       'include_dirs': [
         '<(ABSEIL_ROOT)',
       ],
-      'sources': [
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'sources': [
         '<(ABSEIL_ROOT)/absl/algorithm/algorithm.h',
         '<(ABSEIL_ROOT)/absl/algorithm/container.h',
         '<(ABSEIL_ROOT)/absl/base/attributes.h',
@@ -367,7 +372,9 @@
         '<(ABSEIL_ROOT)/absl/types/span.h',
         '<(ABSEIL_ROOT)/absl/types/variant.h',
         '<(ABSEIL_ROOT)/absl/utility/utility.h',
-      ]
+          ]
+        }],  # node_shared_abseil=="false"
+      ],
     },  # abseil
   ]
 }
