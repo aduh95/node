@@ -43,9 +43,6 @@
     ngtcp2
     ;
 })
-// (pkgs.lib.optionalAttrs withLief {
-  inherit (pkgs) lief;
-})
 // (pkgs.lib.optionalAttrs withSQLite {
   inherit (pkgs) sqlite;
 })
