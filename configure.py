@@ -598,6 +598,28 @@ shared_optgroup.add_argument('--shared-simdutf-libpath',
     dest='shared_simdutf_libpath',
     help='a directory to search for the shared simdutf DLL')
 
+shared_optgroup.add_argument('--shared-abseil-cpp',
+    action='store_true',
+    dest='shared_abseil',
+    default=None,
+    help='link to a shared abseil DLL instead of static linking')
+
+shared_optgroup.add_argument('--shared-abseil-cpp-includes',
+    action='store',
+    dest='shared_abseil_includes',
+    help='directory containing abseil header files')
+
+shared_optgroup.add_argument('--shared-abseil-cpp-libname',
+    action='store',
+    dest='shared_abseil_libname',
+    default='absl_base,absl_strings,absl_synchronization,absl_time,absl_int128,absl_raw_hash_set,absl_hash,absl_city,absl_debugging_internal,absl_demangle_internal,absl_stacktrace,absl_symbolize,absl_malloc_internal,absl_raw_logging_internal,absl_throw_delegate,absl_time_zone,absl_civil_time,absl_spinlock_wait,absl_graphcycles_internal,absl_kernel_timeout_internal,absl_strings_internal,absl_str_format_internal',
+    help='alternative lib name to link to [default: %(default)s]')
+
+shared_optgroup.add_argument('--shared-abseil-cpp-libpath',
+    action='store',
+    dest='shared_abseil_libpath',
+    help='a directory to search for the shared abseil DLL')
+
 shared_optgroup.add_argument('--shared-ada',
     action='store_true',
     dest='shared_ada',
@@ -2622,6 +2644,7 @@ configure_napi(output)
 configure_library('zlib', output)
 configure_library('http_parser', output, pkgname='libllhttp')
 configure_library('libuv', output)
+configure_library('abseil', output, pkgname='absl')
 configure_library('ada', output)
 configure_library('simdjson', output)
 configure_library('simdutf', output)

@@ -19,6 +19,13 @@
     zlib
     zstd
     ;
+  abseil-cpp = pkgs.abseil-cpp.overrideAttrs {
+    src = pkgs.fetchgit {
+      url = "https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp.git";
+      rev = "3fb321d9764442ceaf2e17b6e68ab6b6836bc78a";
+      hash = "sha256-KpjXpyWp9x0cSmyh3uwn0fwKreHA0Cb8c0rD+RHYB80=";
+    };
+  };
   cares = pkgs.c-ares;
   hdr-histogram = pkgs.hdrhistogram_c;
   http-parser = pkgs.llhttp;

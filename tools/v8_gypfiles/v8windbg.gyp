@@ -50,7 +50,6 @@
       'dependencies': [
         'gen_heap_constants',
 
-        'abseil.gyp:abseil',
         'v8.gyp:generate_bytecode_builtins_list',
         'v8.gyp:run_torque',
         'v8.gyp:v8_maybe_icu',
@@ -67,6 +66,11 @@
         "<(SHARED_INTERMEDIATE_DIR)/torque-generated/instance-types.h",
       ],
       # Enable RTTI //build/config/compiler:rtti
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
+      ],
       'cflags_cc': [ '-frtti' ],
       'cflags_cc!': [ '-fno-rtti' ],
       'xcode_settings': {
@@ -151,7 +155,6 @@
         '<(V8_ROOT)/include',
       ],
       'dependencies': [
-        'abseil.gyp:abseil',
         'v8.gyp:v8_snapshot',
         'v8.gyp:v8_libbase',
         'v8.gyp:v8_libplatform',
@@ -159,6 +162,11 @@
         'v8.gyp:fp16',
         'v8.gyp:generate_bytecode_builtins_list',
         'v8.gyp:run_torque',
+      ],
+      'conditions': [
+        ['node_shared_abseil=="false"', {
+          'dependencies': ['abseil.gyp:abseil'],
+        }],
       ],
       'sources': [
         '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/test/mkgrokdump/BUILD.gn"  "mkgrokdump.*?sources = ")',
