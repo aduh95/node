@@ -22,6 +22,7 @@
   cares = pkgs.c-ares;
   hdr-histogram = pkgs.hdrhistogram_c;
   http-parser = pkgs.llhttp;
+  merve = pkgs.callPackage ./merve.nix { };
   nghttp2 = pkgs.nghttp2.overrideAttrs {
     patches = [
       (pkgs.fetchpatch2 {
