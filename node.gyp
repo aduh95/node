@@ -20,6 +20,7 @@
     'node_shared_libuv%': 'false',
     'node_shared_lief%': 'false',
     'node_shared_nbytes%': 'false',
+    'node_shared_ncrypto%': 'false',
     'node_shared_nghttp2%': 'false',
     'node_shared_openssl%': 'false',
     'node_shared_sqlite%': 'false',
@@ -994,7 +995,12 @@
             'Ws2_32',
           ],
         }],
-        [ 'node_use_openssl=="true"', {
+        [ 'node_use_openssl=="true" and node_shared_ncrypto=="true"', {
+          'sources': [
+            '<@(node_crypto_sources)',
+          ],
+        }],
+        [ 'node_use_openssl=="true" and node_shared_ncrypto=="false"', {
           'sources': [
             '<@(node_crypto_sources)',
           ],
@@ -1307,11 +1313,13 @@
           'defines': [
             'HAVE_OPENSSL=1',
           ],
+        }, {
+          'sources!': [ '<@(node_cctest_openssl_sources)' ],
+        }],
+        [ 'node_use_openssl=="true" and node_shared_ncrypto=="false"', {
           'dependencies': [
             'deps/ncrypto/ncrypto.gyp:ncrypto',
           ],
-        }, {
-          'sources!': [ '<@(node_cctest_openssl_sources)' ],
         }],
         [ 'node_use_quic=="true"', {
           'defines': [
@@ -1597,11 +1605,13 @@
           ],
         }],
         [ 'node_use_openssl=="true"', {
-          'dependencies': [
-            'deps/ncrypto/ncrypto.gyp:ncrypto',
-          ],
           'defines': [
             'HAVE_OPENSSL=1',
+          ],
+        }],
+        [ 'node_use_openssl=="true" and node_shared_ncrypto=="false"', {
+          'dependencies': [
+            'deps/ncrypto/ncrypto.gyp:ncrypto',
           ],
         }],
         [ 'node_use_node_code_cache=="true"', {

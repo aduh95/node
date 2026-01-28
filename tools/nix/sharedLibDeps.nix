@@ -45,25 +45,35 @@
 // (pkgs.lib.optionalAttrs withSQLite {
   inherit (pkgs) sqlite;
 })
-// (pkgs.lib.optionalAttrs withSSL {
-  openssl = pkgs.openssl.overrideAttrs (old: {
+// (pkgs.lib.optionalAttrs withSSL (
+  let
     version = "3.5.4";
-    src = pkgs.fetchurl {
-      url = builtins.replaceStrings [ old.version ] [ "3.5.4" ] old.src.url;
-      hash = "sha256-lnMR+ElVMWlpvbHY1LmDcY70IzhjnGIexMNP3e81Xpk=";
-    };
-    doCheck = false;
-    configureFlags = (old.configureFlags or [ ]) ++ [
-      "no-docs"
-      "no-tests"
-    ];
-    outputs = [
-      "bin"
-      "out"
-      "dev"
-    ];
-  });
-})
+    inherit (pkgs)
+      openssl_3_6
+      ;
+    openssl = openssl_3_6.overrideAttrs (old: {
+      inherit version;
+      src = pkgs.fetchurl {
+        url = builtins.replaceStrings [ old.version ] [ version ] old.src.url;
+        hash = "sha256-soyRUyqLZaH5g7TCi3SIF05KAQCOKc6Oab14nyi8Kok=";
+      };
+      doCheck = false;
+      configureFlags = (old.configureFlags or [ ]) ++ [
+        "no-docs"
+        "no-tests"
+      ];
+      outputs = [
+        "bin"
+        "out"
+        "dev"
+      ];
+    });
+  in
+  {
+    inherit openssl;
+    ncrypto = pkgs.callPackage ./ncrypto.nix { inherit openssl; };
+  }
+))
 // (pkgs.lib.optionalAttrs withTemporal {
   inherit (pkgs) temporal_capi;
 })
