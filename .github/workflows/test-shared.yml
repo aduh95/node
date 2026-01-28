@@ -25,6 +25,7 @@ on:
       - deps/llhttp/**
       - deps/merve/**
       - deps/nbytes/**
+      - deps/ncrypto/**
       - deps/nghttp2/**
       - deps/ngtcp2/**
       - deps/openssl/*/**
@@ -75,6 +76,7 @@ on:
       - deps/llhttp/**
       - deps/merve/**
       - deps/nbytes/**
+      - deps/ncrypto/**
       - deps/nghttp2/**
       - deps/ngtcp2/**
       - deps/openssl/*/**

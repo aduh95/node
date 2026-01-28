@@ -399,6 +399,28 @@ shared_optgroup.add_argument('--shared-nbytes-libpath',
     dest='shared_nbytes_libpath',
     help='a directory to search for the shared nbytes DLL')
 
+shared_optgroup.add_argument('--shared-ncrypto',
+    action='store_true',
+    dest='shared_ncrypto',
+    default=None,
+    help='link to a shared ncrypto DLL instead of static linking')
+
+shared_optgroup.add_argument('--shared-ncrypto-includes',
+    action='store',
+    dest='shared_ncrypto_includes',
+    help='directory containing ncrypto header files')
+
+shared_optgroup.add_argument('--shared-ncrypto-libname',
+    action='store',
+    dest='shared_ncrypto_libname',
+    default='ncrypto',
+    help='alternative lib name to link to [default: %(default)s]')
+
+shared_optgroup.add_argument('--shared-ncrypto-libpath',
+    action='store',
+    dest='shared_ncrypto_libpath',
+    help='a directory to search for the shared ncrypto DLL')
+
 shared_optgroup.add_argument('--shared-nghttp2',
     action='store_true',
     dest='shared_nghttp2',
@@ -2609,6 +2631,7 @@ configure_library('gtest', output)
 configure_library('hdr_histogram', output)
 configure_library('merve', output)
 configure_library('nbytes', output)
+configure_library('ncrypto', output)
 configure_library('nghttp2', output, pkgname='libnghttp2')
 configure_library('nghttp3', output, pkgname='libnghttp3')
 configure_library('ngtcp2', output, pkgname='libngtcp2')

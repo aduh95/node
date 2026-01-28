@@ -65,8 +65,6 @@
       }${opensslSrc}" { })
       openssl_3_6
       ;
-  in
-  {
     openssl = openssl_3_6.overrideAttrs (old: {
       inherit version;
       src = pkgs.fetchurl {
@@ -84,6 +82,10 @@
         "dev"
       ];
     });
+  in
+  {
+    inherit openssl;
+    ncrypto = pkgs.callPackage ./ncrypto.nix { inherit openssl; };
   }
 ))
 // (pkgs.lib.optionalAttrs withTemporal {
