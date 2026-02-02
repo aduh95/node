@@ -34,7 +34,10 @@
   }/pkgs/by-name/nb/nbytes/package.nix" { };
 }
 // (pkgs.lib.optionalAttrs withLief {
-  inherit (pkgs) lief;
+  lief = pkgs.callPackage (builtins.fetchurl {
+    url = "https://github.com/NixOS/nixpkgs/raw/ab9fbbcf4858bd6d40ba2bbec37ceb4ab6e1f562/pkgs/by-name/li/lief/package.nix";
+    sha256 = "1g2ax8zdl6nsrvp94r27g31492ln3qgxf35pz8dm5p0scjb4fdam";
+  }) { };
 })
 // (pkgs.lib.optionalAttrs withQuic {
   inherit (pkgs)
