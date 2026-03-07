@@ -18,21 +18,18 @@
   withSQLite ? true,
   withSSL ? true,
   withTemporal ? false,
-  sharedLibDeps ?
-    let
-      d = import ./tools/nix/sharedLibDeps.nix {
-        inherit
-          pkgs
-          withLief
-          withQuic
-          withSQLite
-          withSSL
-          withTemporal
-          ;
-      };
-    in
-    # To avoid conflicts with V8's bundled simdutf lib, it's easier to remove it when using a precompiled V8.
-    if (useSeparateDerivationForV8 != false) then builtins.removeAttrs d [ "simdutf" ] else d,
+  sharedLibDeps ? (
+    import ./tools/nix/sharedLibDeps.nix {
+      inherit
+        pkgs
+        withLief
+        withQuic
+        withSQLite
+        withSSL
+        withTemporal
+        ;
+    }
+  ),
 
   # dev tools (not needed to build Node.js, useful to maintain it)
   ncu-path ? null, # Provide this if you want to use a local version of NCU
@@ -47,7 +44,16 @@ let
 
   needsRustCompiler = withTemporal && !builtins.hasAttr "temporal_capi" sharedLibDeps;
 
-  buildInputs = builtins.attrValues sharedLibDeps ++ pkgs.lib.optional useSharedICU icu;
+  nativeBuildInputs =
+    pkgs.nodejs-slim_latest.nativeBuildInputs
+    ++ pkgs.lib.optionals needsRustCompiler [
+      pkgs.cargo
+      pkgs.rustc
+    ];
+  buildInputs =
+    pkgs.lib.optional useSharedICU icu ++ pkgs.lib.optional withTemporal sharedLibDeps.temporal_capi;
+
+  # Put here only the configure flags that affect the V8 build
   configureFlags = [
     (
       if icu == null then
@@ -57,47 +63,31 @@ let
     )
   ]
   ++ extraConfigFlags
-  ++ pkgs.lib.optional (!withAmaro) "--without-amaro"
-  ++ pkgs.lib.optional (!withLief) "--without-lief"
-  ++ pkgs.lib.optional withQuic "--experimental-quic"
-  ++ pkgs.lib.optional (!withSQLite) "--without-sqlite"
-  ++ pkgs.lib.optional (!withSSL) "--without-ssl"
-  ++ pkgs.lib.optional withTemporal "--v8-enable-temporal-support"
-  ++ pkgs.lib.optional (ninja != null) "--ninja"
-  ++ pkgs.lib.optional loadJSBuiltinsDynamically "--node-builtin-modules-path=${builtins.toString ./.}"
-  ++ pkgs.lib.concatMap (name: [
-    "--shared-${name}"
-    "--shared-${name}-libpath=${pkgs.lib.getLib sharedLibDeps.${name}}/lib"
-    "--shared-${name}-include=${pkgs.lib.getInclude sharedLibDeps.${name}}/include"
-  ]) (builtins.attrNames sharedLibDeps);
+  ++ pkgs.lib.optionals withTemporal [
+    "--v8-enable-temporal-support"
+    "--shared-temporal_capi"
+  ];
 in
 pkgs.mkShell {
-  inherit (pkgs.nodejs-slim_latest) nativeBuildInputs;
+  inherit nativeBuildInputs;
 
   buildInputs =
-    buildInputs
+    builtins.attrValues sharedLibDeps
+    ++ buildInputs
     ++ pkgs.lib.optional (useSeparateDerivationForV8 != false) (
       if useSeparateDerivationForV8 == true then
-        import ./tools/nix/v8.nix {
+        pkgs.callPackage ./tools/nix/v8.nix {
           inherit
-            pkgs
             configureFlags
             buildInputs
-            needsRustCompiler
+            nativeBuildInputs
             ;
         }
       else
         useSeparateDerivationForV8
     );
 
-  packages =
-    pkgs.lib.optional (ccache != null) ccache
-    ++ devTools
-    ++ benchmarkTools
-    ++ pkgs.lib.optionals needsRustCompiler [
-      pkgs.cargo
-      pkgs.rustc
-    ];
+  packages = devTools ++ benchmarkTools ++ pkgs.lib.optional (ccache != null) ccache;
 
   shellHook = pkgs.lib.optionalString (ccache != null) ''
     export CC="${pkgs.lib.getExe ccache} $CC"
@@ -118,7 +108,30 @@ pkgs.mkShell {
     ]
   );
   CONFIG_FLAGS = builtins.toString (
-    configureFlags ++ pkgs.lib.optional (useSeparateDerivationForV8 != false) "--without-bundled-v8"
+    configureFlags
+    ++ pkgs.lib.optional (ninja != null) "--ninja"
+    ++ pkgs.lib.optional (!withAmaro) "--without-amaro"
+    ++ pkgs.lib.optional (!withLief) "--without-lief"
+    ++ pkgs.lib.optional withQuic "--experimental-quic"
+    ++ pkgs.lib.optional (!withSQLite) "--without-sqlite"
+    ++ pkgs.lib.optional (!withSSL) "--without-ssl"
+    ++ pkgs.lib.optional loadJSBuiltinsDynamically "--node-builtin-modules-path=${builtins.toString ./.}"
+    ++ pkgs.lib.optional (useSeparateDerivationForV8 != false) "--without-bundled-v8"
+    ++
+      pkgs.lib.concatMap
+        (name: [
+          "--shared-${name}"
+          "--shared-${name}-libpath=${pkgs.lib.getLib sharedLibDeps.${name}}/lib"
+          "--shared-${name}-include=${pkgs.lib.getInclude sharedLibDeps.${name}}/include"
+        ])
+        (
+          builtins.attrNames (
+            if (useSeparateDerivationForV8 != false) then
+              builtins.removeAttrs sharedLibDeps [ "simdutf" "temporal_capi" ]
+            else
+              sharedLibDeps
+          )
+        )
   );
   NOSQLITE = pkgs.lib.optionalString (!withSQLite) "1";
 }

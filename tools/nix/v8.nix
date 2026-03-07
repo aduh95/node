@@ -1,13 +1,21 @@
 # Derivation for Node.js CI (not officially supported for regular applications)
 {
-  pkgs ? import ./pkgs.nix { },
+  stdenv,
+  lib,
+  patchutils,
+  validatePkgConfig,
+  nodejs-slim_latest,
+
   buildInputs ? [ ],
   configureFlags ? [ ],
-  needsRustCompiler ? false,
+
+  configureScript ? nodejs-slim_latest.configureScript,
+  nativeBuildInputs ? nodejs-slim_latest.nativeBuildInputs,
+  patches ? nodejs-slim_latest.patches,
 }:
 
 let
-  nodejs = pkgs.nodejs-slim_latest;
+  v8Dir = ../../deps/v8;
 
   version =
     let
@@ -26,12 +34,12 @@ let
     else
       "${builtins.elemAt v8Version 0}.${builtins.elemAt v8Version 1}.${builtins.elemAt v8Version 2}.${builtins.elemAt v8Version 3}-${builtins.elemAt v8_embedder_string 0}";
 in
-pkgs.stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation (finalAttrs: {
   pname = "v8";
   inherit version;
   src =
     let
-      inherit (pkgs.lib) fileset;
+      inherit (lib) fileset;
     in
     fileset.toSource {
       root = ../../.;
@@ -61,7 +69,7 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
   # We need to patch tools/gyp/ to work from within Nix sandbox
   prePatch = ''
     patches=()
-    for patch in ${pkgs.lib.concatStringsSep " " nodejs.patches}; do
+    for patch in ${lib.concatStringsSep " " patches}; do
       filtered=$(mktemp)
       filterdiff -p1 -i 'tools/gyp/*' "$patch" > "$filtered"
       if [ -s "$filtered" ]; then
@@ -70,26 +78,19 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
     done
   '';
 
-  inherit (nodejs) configureScript;
-  inherit configureFlags buildInputs;
+  inherit configureScript configureFlags buildInputs;
 
-  nativeBuildInputs =
-    nodejs.nativeBuildInputs
-    ++ [
-      pkgs.patchutils
-      pkgs.validatePkgConfig
-    ]
-    ++ pkgs.lib.optionals needsRustCompiler [
-      pkgs.cargo
-      pkgs.rustc
-    ];
+  nativeBuildInputs = nativeBuildInputs ++ [
+    patchutils
+    validatePkgConfig
+  ];
 
   buildPhase = ''
     ninja -v -C out/Release v8_snapshot v8_libplatform
   '';
   installPhase = ''
     ${
-      if pkgs.stdenv.buildPlatform.isDarwin then
+      if stdenv.hostPlatform.isDarwin then
         # Darwin is excluded from creating thin archive in tools/gyp/pylib/gyp/generator/ninja.py:2488
         "install -Dm644 out/Release/lib* -t $out/lib"
       else
