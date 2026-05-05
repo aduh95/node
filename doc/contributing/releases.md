@@ -357,6 +357,11 @@ already defined in `src/node_version.h`:
 #define NODE_MAJOR_VERSION x
 #define NODE_MINOR_VERSION y
 #define NODE_PATCH_VERSION z
+
+// And for alpha releases:
+#define NODE_ALPHA_MAJOR_VERSION a
+#define NODE_ALPHA_MINOR_VERSION b
+#define NODE_ALPHA_PATCH_VERSION c
 ```
 
 Set the `NODE_VERSION_IS_RELEASE` macro value to `1`. This causes the build to
@@ -365,6 +370,14 @@ be produced with a version string that does not have a trailing pre-release tag:
 ```c
 #define NODE_VERSION_IS_RELEASE 1
 ```
+
+<details>
+<summary>Major version release</summary>
+
+Remove the `NODE_ALPHA_MAJOR_VERSION`, `NODE_ALPHA_MINOR_VERSION`, and
+`NODE_ALPHA_PATCH_VERSION` macros.
+
+</details>
 
 ### 4. Update the changelog
 
@@ -825,8 +838,8 @@ project README.
 
 On release proposal branch, edit `src/node_version.h` again and:
 
-* Increment `NODE_PATCH_VERSION` by one
-* Change `NODE_VERSION_IS_RELEASE` back to `0`
+* Increment `NODE_PATCH_VERSION` (or `NODE_ALPHA_PATCH_VERSION` for alpha releases) by one.
+* Change `NODE_VERSION_IS_RELEASE` back to `0`.
 
 Commit this change with the following commit message format:
 
@@ -893,9 +906,11 @@ git restore --source=upstream/main src/node_version.h
 On the main branch, instead of reverting changes made to `src/node_version.h`
 edit it instead and:
 
-* Increment `NODE_MAJOR_VERSION` by one
-* Reset `NODE_PATCH_VERSION` to `0`
-* Change `NODE_VERSION_IS_RELEASE` back to `0`
+* Increment `NODE_MAJOR_VERSION` by one.
+* Reset `NODE_PATCH_VERSION` and `NODE_MINOR_VERSION` to `0`.
+* Set `NODE_ALPHA_MAJOR_VERSION`, `NODE_ALPHA_MINOR_VERSION`, and
+  `NODE_ALPHA_PATCH_VERSION` to `0`.
+* Change `NODE_VERSION_IS_RELEASE` back to `0`.
 
 Amend the current commit to apply the changes:
 
@@ -1194,9 +1209,9 @@ git node release --prepare --startLTS
 To mark a release line as LTS, the following changes must be made to
 `src/node_version.h`:
 
-* The `NODE_MINOR_VERSION` macro must be incremented by one
-* The `NODE_PATCH_VERSION` macro must be set to `0`
-* The `NODE_VERSION_IS_LTS` macro must be set to `1`
+* The `NODE_MINOR_VERSION` macro must be incremented by one.
+* The `NODE_PATCH_VERSION` macro must be set to `0`.
+* The `NODE_VERSION_IS_LTS` macro must be set to `1`.
 * The `NODE_VERSION_LTS_CODENAME` macro must be set to the code name selected
   for the LTS release.
 
@@ -1265,15 +1280,15 @@ from cutting a minor or patch release.
 
 ### Schedule
 
-New Node.js Major releases happen twice per year:
+New Node.js Major releases happen once per year:
 
-* Even-numbered releases are cut in April.
-* Odd-numbered releases are cut in October.
+* Branch-off is in October.
+* Semver-major release is in April.
 
 Major releases should be targeted for the third Tuesday of the release month.
 
 A major release must not slip beyond the release month. In other words, major
-releases must not slip into May or November.
+releases must not slip into May.
 
 The @nodejs/releasers make a call for releasers 3 months in advance.
 Currently, this call is automated in the `#nodejs-release-private`
@@ -1283,15 +1298,15 @@ The release date for the next major release should be announced immediately
 following the current release (e.g. the release date for 13.0.0 should be
 announced immediately following the release of 12.0.0).
 
-### Release branch
+### Branch-off
 
-Approximately two months before a major release, new `vN.x` and
+#### Release branch
+
+Approximately six months before a major release, new `vN.x` and
 `vN.x-staging` branches (where `N` indicates the major release) should be
-created as forks of the `main` branch. Up until the cut-off date announced by
-the releaser, these must be kept in sync with `main`.
-
-The `vN.x` and `vN.x-staging` branches must be kept in sync with one another
-up until the date of the release.
+created as forks of the `main` branch. Alpha releases should be released picking
+up commits from `main`. Target the first alpha release to be released the same
+day as the previous release line is graduated to LTS status.
 
 If a `SEMVER-MAJOR` pull request lands on the default branch within one month
 prior to the major release date, it must not be included on the new major
@@ -1299,10 +1314,9 @@ staging branch, unless there is consensus from the Node.js releasers team to
 do so. This measure aims to ensure better stability for the release candidate
 (RC) phase, which begins approximately two weeks prior to the official release.
 By restricting `SEMVER-MAJOR` commits in this period, we provide more time for
-thorough testing and reduce the potential for major breakages, especially in
-LTS lines.
+thorough testing and reduce the potential for major breakages.
 
-### Create release labels
+#### Create release labels
 
 The following issue labels must be created:
 
@@ -1316,78 +1330,6 @@ The following issue labels must be created:
 The label description can be copied from existing labels of previous releases.
 The label color must be the same for all new labels, but different from the
 labels of previous releases.
-
-### Release proposal
-
-A draft release proposal should be created 6 weeks before the release. A
-separate `vN.x-proposal` branch should be created that tracks the `vN.x`
-branch. This branch will contain the draft release commit (with the draft
-changelog).
-
-Notify the `@nodejs/npm` team in the release proposal PR to inform them of the
-upcoming release. `npm` maintains a list of [supported versions](https://github.com/npm/cli/blob/latest/lib/utils/unsupported.js#L3)
-that will need updating to include the new major release.
-
-To keep the branch in sync until the release date, it can be as simple as
-doing the following:
-
-> Make sure to check that there are no PRs with the label `dont-land-on-vX.x`.
-
-```bash
-git checkout vN.x
-git reset --hard upstream/main
-git checkout vN.x-staging
-git reset --hard upstream/main
-git push upstream vN.x
-git push upstream vN.x-staging
-```
-
-### Update `NODE_MODULE_VERSION`
-
-This macro in `src/node_version.h` is used to signal an ABI version for native
-addons. It currently has two common uses in the community:
-
-* Determining what API to work against for compiling native addons, e.g.
-  [NAN](https://github.com/nodejs/nan) uses it to form a compatibility-layer for
-  much of what it wraps.
-* Determining the ABI for downloading pre-built binaries of native addons, e.g.
-  [node-pre-gyp](https://github.com/mapbox/node-pre-gyp) uses this value as
-  exposed via `process.versions.modules` to help determine the appropriate
-  binary to download at install-time.
-
-The general rule is to bump this version when there are _breaking ABI_ changes
-and also if there are non-trivial API changes. The rules are not yet strictly
-defined, so if in doubt, please confer with someone that will have a more
-informed perspective, such as a member of the NAN team.
-
-A registry of currently used `NODE_MODULE_VERSION` values is maintained at
-<https://github.com/nodejs/node/blob/HEAD/doc/abi_version_registry.json>.
-When bumping `NODE_MODULE_VERSION`, you should choose a new value not listed
-in the registry. Also include a change to the registry in your commit to
-reflect the newly used value. Ensure that the release commit removes the
-`-pre` suffix for the major version being prepared.
-
-It is current TSC policy to bump major version when ABI changes. If you
-see a need to bump `NODE_MODULE_VERSION` outside of a major release then
-you should consult the TSC. Commits may need to be reverted or a major
-version bump may need to happen.
-
-### Test releases and release candidates
-
-Test builds should be generated from the `vN.x-proposal` branch starting at
-about 6 weeks before the release.
-
-Release Candidates should be generated from the `vN.x-proposal` branch starting
-at about 4 weeks before the release, with a target of one release candidate
-per week.
-
-Always run test releases and release candidates through the Canary in the
-Goldmine tool for additional testing.
-
-### Changelogs
-
-Generating major release changelogs is a bit more involved than minor and patch
-changelogs.
 
 #### Create the changelog file
 
@@ -1420,12 +1362,75 @@ $ branch-diff upstream/vN-1.x upstream/vN.x --require-label=semver-minor --group
 $ branch-diff upstream/vN-1.x upstream/vN.x --exclude-label=semver-major,semver-minor --group --filter-release --markdown # get all patches
 ```
 
+### Semver-major release
+
+#### Release proposal
+
+A draft release proposal should be created 6 weeks before the release. A
+separate `vN.x-proposal` branch should be created that tracks the `vN.x`
+branch. This branch will contain the draft release commit (with the draft
+changelog).
+
+Notify the `@nodejs/npm` team in the release proposal PR to inform them of the
+upcoming release. `npm` maintains a list of [supported versions](https://github.com/npm/cli/blob/latest/lib/utils/unsupported.js#L3)
+that will need updating to include the new major release.
+
+To keep the branch in sync until the release date, it can be as simple as
+doing the following:
+
+> Make sure to check that there are no PRs with the label `dont-land-on-vX.x`.
+
+```bash
+git checkout vN.x
+git reset --hard upstream/main
+git checkout vN.x-staging
+git reset --hard upstream/main
+git push upstream vN.x
+git push upstream vN.x-staging
+```
+
+#### Update `NODE_MODULE_VERSION`
+
+This macro in `src/node_version.h` is used to signal an ABI version for native
+addons. It currently has two common uses in the community:
+
+* Determining what API to work against for compiling native addons, e.g.
+  [NAN](https://github.com/nodejs/nan) uses it to form a compatibility-layer for
+  much of what it wraps.
+* Determining the ABI for downloading pre-built binaries of native addons, e.g.
+  [node-pre-gyp](https://github.com/mapbox/node-pre-gyp) uses this value as
+  exposed via `process.versions.modules` to help determine the appropriate
+  binary to download at install-time.
+
+The general rule is to bump this version when there are _breaking ABI_ changes
+and also if there are non-trivial API changes. The rules are not yet strictly
+defined, so if in doubt, please confer with someone that will have a more
+informed perspective, such as a member of the NAN team.
+
+A registry of currently used `NODE_MODULE_VERSION` values is maintained at
+<https://github.com/nodejs/node/blob/HEAD/doc/abi_version_registry.json>.
+When bumping `NODE_MODULE_VERSION`, you should choose a new value not listed
+in the registry. Also include a change to the registry in your commit to
+reflect the newly used value. Ensure that the release commit removes the
+`-pre` suffix for the major version being prepared.
+
+It is current TSC policy to bump major version when ABI changes. If you
+see a need to bump `NODE_MODULE_VERSION` outside of a major release then
+you should consult the TSC. Commits may need to be reverted or a major
+version bump may need to happen.
+
+### Changelogs
+
+Generating major release changelogs is a bit more involved than minor and patch
+changelogs.
+
 #### Generate the notable changes
 
 For a major release, all SEMVER-MAJOR commits that are not strictly internal,
 test, or doc-related are to be listed as notable changes. Some SEMVER-MINOR
 commits may be listed as notable changes on a case-by-case basis. Use your
 judgment there.
+Include the notable changes from the Alpha versions where it applies.
 
 ### Update the expected assets
 
