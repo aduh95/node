@@ -4,9 +4,6 @@ import { hasQuic, hasIPv6, skip, mustCall } from '../common/index.mjs';
 import assert from 'node:assert';
 import * as fixtures from '../common/fixtures.mjs';
 
-const { partialDeepStrictEqual, strictEqual, ok } = assert;
-const { readKey } = fixtures;
-
 if (!hasQuic) {
   skip('QUIC is not enabled');
 }
@@ -19,8 +16,8 @@ if (!hasIPv6) {
 const { listen, connect } = await import('node:quic');
 const { createPrivateKey } = await import('node:crypto');
 
-const key = createPrivateKey(readKey('agent1-key.pem'));
-const cert = readKey('agent1-cert.pem');
+const key = createPrivateKey(fixtures.readKey('agent1-key.pem'));
+const cert = fixtures.readKey('agent1-cert.pem');
 
 const check = {
   // The SNI value
@@ -35,12 +32,14 @@ const check = {
 // The opened promise should resolve when the handshake is complete.
 
 const serverOpened = Promise.withResolvers();
+const clientOpened = Promise.withResolvers();
 
-const serverEndpoint = await listen(mustCall(async (serverSession) => {
-  const info = await serverSession.opened;
-  partialDeepStrictEqual(info, check);
-  serverOpened.resolve();
-  await serverSession.close();
+const serverEndpoint = await listen(mustCall((serverSession) => {
+  serverSession.opened.then((info) => {
+    assert.partialDeepStrictEqual(info, check);
+    serverOpened.resolve();
+    serverSession.close();
+  }).then(mustCall());
 }), {
   sni: { '*': { keys: [key], certs: [cert] } },
   alpn: ['quic-test'],
@@ -53,10 +52,10 @@ const serverEndpoint = await listen(mustCall(async (serverSession) => {
   },
 });
 // Buffer is not detached.
-strictEqual(cert.buffer.detached, false);
+assert.strictEqual(cert.buffer.detached, false);
 
 // The server must have an address to connect to after listen resolves.
-ok(serverEndpoint.address !== undefined);
+assert.ok(serverEndpoint.address !== undefined);
 
 const clientSession = await connect(serverEndpoint.address, {
   alpn: 'quic-test',
@@ -67,9 +66,10 @@ const clientSession = await connect(serverEndpoint.address, {
     },
   },
 });
+clientSession.opened.then((info) => {
+  assert.partialDeepStrictEqual(info, check);
+  clientOpened.resolve();
+}).then(mustCall());
 
-const info = await clientSession.opened;
-partialDeepStrictEqual(info, check);
-
-await serverOpened.promise;
+await Promise.all([serverOpened.promise, clientOpened.promise]);
 clientSession.close();

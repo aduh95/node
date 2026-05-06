@@ -218,26 +218,11 @@ class Stream final : public AsyncWrap,
   // data to be acknowledged by the remote peer.
   bool is_eos() const;
 
-  // True if the stream wants to send trailing headers after the body.
-  bool wants_trailers() const;
-
-  // Marks this stream as having received 0-RTT early data.
-  void set_early();
-
   // True if this stream is still in a readable state.
   bool is_readable() const;
 
   // True if this stream is still in a writable state.
   bool is_writable() const;
-
-  // True if an outbound data source has been configured.
-  bool has_outbound() const;
-
-  // True if a Blob::Reader has been created for the inbound data.
-  bool has_reader() const;
-
-  // Returns the Blob::Reader for the inbound data, or nullptr.
-  Blob::Reader* reader() const;
 
   // Called by the session/application to indicate that the specified number
   // of bytes have been acknowledged by the peer.
@@ -341,14 +326,6 @@ class Stream final : public AsyncWrap,
   // blocked because of flow control restriction.
   void EmitBlocked();
 
-  // Notifies the JavaScript side that the outbound buffer has capacity
-  // for more data. Fires when write_desired_size transitions from 0 to > 0.
-  void EmitDrain();
-
-  // Updates the write_desired_size state field based on current flow control
-  // and outbound buffer state. Emits drain if transitioning from 0 to > 0.
-  void UpdateWriteDesiredSize();
-
   // Delivers the set of inbound headers that have been collected.
   void EmitHeaders();
 
@@ -378,14 +355,11 @@ class Stream final : public AsyncWrap,
   error_code pending_close_read_code_ = 0;
   error_code pending_close_write_code_ = 0;
 
-  struct StoredPriority {
-    StreamPriority priority = StreamPriority::DEFAULT;
-    StreamPriorityFlags flags = StreamPriorityFlags::NON_INCREMENTAL;
-    bool pending = false;
+  struct PendingPriority {
+    StreamPriority priority;
+    StreamPriorityFlags flags;
   };
-  StoredPriority priority_;
-
-  const StoredPriority& stored_priority() const { return priority_; }
+  std::optional<PendingPriority> pending_priority_ = std::nullopt;
 
   // The headers_ field holds a block of headers that have been received and
   // are being buffered for delivery to the JavaScript side.
@@ -419,7 +393,6 @@ class Stream final : public AsyncWrap,
   using Queue = ListHead<Stream, &Stream::stream_queue_>;
 
   void Schedule(Queue* queue);
-  void Unschedule();
 };
 
 }  // namespace node::quic
