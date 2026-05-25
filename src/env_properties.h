@@ -458,6 +458,7 @@
   V(sqlite_statement_sync_iterator_constructor_template, v8::FunctionTemplate) \
   V(sqlite_session_constructor_template, v8::FunctionTemplate)                 \
   V(srv_record_template, v8::DictionaryTemplate)                               \
+  V(storage_constructor_template, v8::FunctionTemplate)                        \
   V(streambaseoutputstream_constructor_template, v8::ObjectTemplate)           \
   V(tcp_constructor_template, v8::FunctionTemplate)                            \
   V(tlsa_record_template, v8::DictionaryTemplate)                              \

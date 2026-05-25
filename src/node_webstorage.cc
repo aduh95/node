@@ -697,6 +697,13 @@ static Intercepted IndexedDefiner(uint32_t index,
 }
 
 static void StorageLengthGetter(const FunctionCallbackInfo<Value>& info) {
+  Environment* env = Environment::GetCurrent(info);
+  if (!env->storage_constructor_template()->HasInstance(info.This())) {
+    THROW_ERR_INVALID_THIS(
+        env,
+        "The Storage.length getter can only be used on instances of Storage");
+    return;
+  }
   Storage* storage;
   ASSIGN_OR_RETURN_UNWRAP(&storage, info.This());
   Local<Value> result;
@@ -714,6 +721,7 @@ static void Initialize(Local<Object> target,
   Isolate* isolate = env->isolate();
   auto ctor_tmpl = NewFunctionTemplate(isolate, Storage::New);
   auto inst_tmpl = ctor_tmpl->InstanceTemplate();
+  env->isolate_data()->set_storage_constructor_template(ctor_tmpl);
 
   inst_tmpl->SetInternalFieldCount(Storage::kInternalFieldCount);
   inst_tmpl->SetHandler(NamedPropertyHandlerConfiguration(

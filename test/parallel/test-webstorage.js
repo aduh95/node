@@ -138,3 +138,11 @@ test('disabled with --no-webstorage', async () => {
     assert(cp.stderr.includes(`ReferenceError: ${api} is not defined`));
   }
 });
+
+test('getters on invalid this', () => {
+  assert.throws(() => Storage.prototype.length, { code: 'ERR_INVALID_THIS' });
+  const { get } = Object.getOwnPropertyDescriptor(Storage.prototype, 'length');
+  for (const thisArg of [null, undefined, 1n, -0, NaN, true, false, '', [], {}, Symbol()]) {
+    assert.throws(() => get.call(thisArg), { code: 'ERR_INVALID_THIS' });
+  }
+})
