@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ex
 # Shell script to update zlib in the source tree to the most recent version.
 # Zlib rarely creates tags or releases, so we use the latest commit on the main branch.
 # See: https://github.com/nodejs/node/pull/47417
@@ -12,7 +12,7 @@ DEPS_DIR="$BASE_DIR/deps"
 
 echo "Comparing latest upstream with current revision"
 
-git fetch https://chromium.googlesource.com/chromium/src/third_party/zlib.git HEAD
+git fetch --no-tags https://chromium.googlesource.com/chromium/src/third_party/zlib.git HEAD
 
 # Revert zconf.h changes before checking diff
 perl -i -pe 's|^//#include "chromeconf.h"|#include "chromeconf.h"|' "$DEPS_DIR/zlib/zconf.h"
@@ -35,7 +35,7 @@ fi
 # two days, we assume that the most recent commit is stable enough to be
 # pulled in.
 LAST_CHANGE_DATE=$(git log -1 --format=%ct FETCH_HEAD)
-TWO_DAYS_AGO=$(date -d 'now - 2 days' '+%s')
+TWO_DAYS_AGO=$(date -d '2 days ago' '+%s' 2>/dev/null || date -v-2d '+%s')
 
 if [ "$LAST_CHANGE_DATE" -gt "$TWO_DAYS_AGO" ]; then
   echo "Skipped because the latest version is too recent."
@@ -48,32 +48,35 @@ echo "Making temporary workspace..."
 
 WORKSPACE=$(mktemp -d 2> /dev/null || mktemp -d -t 'tmp')
 
-cd "$WORKSPACE"
+cleanup () {
+  EXIT_CODE=$?
+  [ -d "$WORKSPACE" ] && rm -rf "$WORKSPACE"
+  exit $EXIT_CODE
+}
 
-mkdir zlib
+trap cleanup INT TERM EXIT
 
-ZLIB_TARBALL="zlib-v$NEW_VERSION.tar.gz"
 
-echo "Fetching zlib source archive"
-curl -sL -o "$ZLIB_TARBALL" https://chromium.googlesource.com/chromium/src/+archive/refs/heads/main/third_party/zlib.tar.gz
+ZLIB_TARBALL="zlib-v$NEW_VERSION.tar"
 
-log_and_verify_sha256sum "zlib" "$ZLIB_TARBALL"
+echo "Packing zlib source archive"
+git archive -o "$WORKSPACE/$ZLIB_TARBALL" --format=tar FETCH_HEAD
 
-gzip -dc "$ZLIB_TARBALL" | tar xf - -C zlib/
+log_and_verify_sha256sum "zlib" "$WORKSPACE/$ZLIB_TARBALL"
 
-rm "$ZLIB_TARBALL"
+mkdir "$WORKSPACE/zlib"
+tar -xf "$WORKSPACE/$ZLIB_TARBALL" -C "$WORKSPACE/zlib"
 
-cp "$DEPS_DIR/zlib/zlib.gyp" "$DEPS_DIR/zlib/win32/zlib.def" "$DEPS_DIR"
+mv "$DEPS_DIR/zlib/zlib.gyp" "$WORKSPACE/."
+mv "$DEPS_DIR/zlib/win32/zlib.def" "$WORKSPACE/."
 
-rm -rf "$DEPS_DIR/zlib" zlib/.git
+rm -rf "$DEPS_DIR/zlib"
 
-mv zlib "$DEPS_DIR/"
+mv "$WORKSPACE/zlib" "$DEPS_DIR/."
+mv "$WORKSPACE/zlib.gyp" "$DEPS_DIR/zlib/."
 
-mv "$DEPS_DIR/zlib.gyp" "$DEPS_DIR/zlib/"
-
-mkdir "$DEPS_DIR/zlib/win32"
-
-mv "$DEPS_DIR/zlib.def" "$DEPS_DIR/zlib/win32"
+mkdir -p "$DEPS_DIR/zlib/win32"
+mv "$WORKSPACE/zlib.def" "$DEPS_DIR/zlib/win32/."
 
 perl -i -pe 's|^#include "chromeconf.h"|//#include "chromeconf.h"|' "$DEPS_DIR/zlib/zconf.h"
 
