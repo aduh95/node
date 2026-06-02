@@ -1,12 +1,13 @@
 #!/bin/sh
 
-# Requires [gh](https://cli.github.com/), [jq](https://jqlang.github.io), git, and grep. Also awk if you pass a URL.
+# Requires [jq](https://jqlang.github.io), git, and grep. Also awk if you pass a URL.
 
-# This script can be used to "purple-merge" PRs that are supposed to land as a single commit, using the "Squash and Merge" feature of GitHub.
+# This script generates the command to "purple-merge" PRs that are supposed to land as a single commit, using the "Squash and Merge" feature of GitHub.
 # To land a PR with this tool:
 # 1. Run `git node land <pr-id-or-url> --fixupAll`
 # 2. Copy the hash of the commit at the top of the PR branch.
 # 3. Run `tools/actions/merge.sh <pr-id-or-url> <commit-hash>` or `tools/actions/merge.sh <url-to-PR-commit>`.
+# 4. Pipe the output to `sh` or copy/paste it to your terminal to actually land the PR.
 
 set -xe
 
@@ -26,12 +27,12 @@ fi
 validation_error=
 if ! expr "X${pr}X" : 'X[0-9]\{1,\}X' >/dev/null; then
   set +x
-  echo "Invalid PR ID: $pr"
+  echo "Invalid PR ID: $pr" >&2
   validation_error=1
 fi
 if ! expr "X${commit_head}X" : 'X[a-f0-9]\{40\}X' >/dev/null; then
   set +x
-  echo "Invalid PR head: $commit_head"
+  echo "Invalid PR head: $commit_head" >&2
   validation_error=1
 fi
 [ -z "$validation_error" ] || {
@@ -44,30 +45,40 @@ fi
   printf '\t%s https://github.com/%s/pull/12345 aaaaabbbbbcccccdddddeeeeefffff1111122222\n' "$0" "$OWNER/$REPOSITORY"
   printf '\t%s https://github.com/%s/pull/12345/commits/aaaaabbbbbcccccdddddeeeeefffff1111122222\n' "$0" "$OWNER/$REPOSITORY"
   exit 1
-}
+} >&2
 
-git log -1 HEAD  --pretty='format:%B' | git interpret-trailers --parse --no-divider | \
+
+TRAILERS=$(git log -1 HEAD  --pretty='format:%B' | git interpret-trailers --parse --no-divider | grep PR-URL)
+
+IS_BACKPORT=1
+echo "$TRAILERS" | grep -q -x "^Backport-PR-URL: https://github.com/$OWNER/$REPOSITORY/pull/$pr$" \
+|| IS_BACKPORT=
+
+[ -n "$IS_BACKPORT" ] || echo "$TRAILERS" | \
   grep -q -x "^PR-URL: https://github.com/$OWNER/$REPOSITORY/pull/$pr$" || {
-    echo "Invalid PR-URL trailer"
+    echo "Invalid PR-URL trailer" >&2
     exit 1
   }
 git log -1 HEAD^ --pretty='format:%B' | git interpret-trailers --parse --no-divider | \
-  grep -q -x "^PR-URL: https://github.com/$OWNER/$REPOSITORY/pull/$pr$" && {
-    echo "Refuse to squash and merge a PR landing in more than one commit"
+  grep -q -x "^$([ -z "$IS_BACKPORT" ] || echo 'Backport-')PR-URL: https://github.com/$OWNER/$REPOSITORY/pull/$pr$" && {
+    echo "Refuse to squash and merge a PR landing in more than one commit" >&2
     exit 1
   }
 
 commit_title=$(git log -1 --pretty='format:%s')
 commit_body=$(git log -1 --pretty='format:%b')
 
-commitSHA="$(
-  jq -cn \
+exec cat <<EOF
+gh api -X PUT repos/${OWNER}/${REPOSITORY}/pulls/${pr}/merge \\
+    --jq 'if .merged then "Landed in \(.sha)" else halt_error end' \\
+    --input -<<'JSON' |
+$(
+  jq -n \
     --arg title "${commit_title}" \
     --arg body "${commit_body}" \
     --arg head "${commit_head}" \
-    '{merge_method:"squash",commit_title:$title,commit_message:$body,sha:$head}' |\
-  gh api -X PUT "repos/${OWNER}/${REPOSITORY}/pulls/${pr}/merge" --input -\
-    --jq 'if .merged then .sha else halt_error end'
-)"
-
-gh pr comment "$pr" --repo "$OWNER/$REPOSITORY" --body "Landed in $commitSHA"
+    '{merge_method:"squash",commit_title:$title,commit_message:$body,sha:$head}'
+)
+JSON
+  gh pr comment $pr --repo $OWNER/$REPOSITORY -F -
+EOF
