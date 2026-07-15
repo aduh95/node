@@ -1,196 +1,27 @@
 name: Benchmark
 
 on:
-  workflow_dispatch:
-    inputs:
-      repo:
-        type: string
-        description: GitHub repository to fetch from (default to the current repo)
-      pr_id:
-        type: number
-        required: true
-        description: The PR to test
-      commit:
-        required: true
-        type: string
-        description: The expect HEAD of the PR
-      category:
-        required: true
-        type: string
-        description: The category (or categories) of tests to run, for example buffers, cluster etc. Maps to a folders in node/benchmark
-      filter:
-        type: string
-        description: A substring to restrict the benchmarks to run in a category. e.g. `net-c2c`
-      runs:
-        type: number
-        default: 30
-        description: How many times to repeat each benchmark
-      post-comment:
-        type: boolean
-        description: Post a comment linking to the run, with the aggregated result once known.
-      token:
-        type: string
-        description: A GitHub token to post comments cross repository (not recommended)
+  push:
 
 permissions:
   contents: read
 
 jobs:
-  post-comment:
-    if: inputs.post-comment
-    outputs:
-      body: ${{ steps.comment.outputs.COMMENT_BODY }}
-      url: ${{ steps.comment.outputs.COMMENT_URL }}
-    runs-on: ubuntu-slim
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Mark token input as sensitive
-        if: inputs.token != ''
-        run: echo "::add-mask::${{ inputs.token }}"
-      - name: Add link to the current run
-        id: comment
-        run: |
-          FILTER_IF_SET=
-          [ -z "$FILTER" ] || FILTER_IF_SET=" / $FILTER"
-          COMMENT_BODY="Benchmark GHA (${CATEGORIES}${FILTER_IF_SET}): ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          echo "COMMENT_BODY=$COMMENT_BODY" >> "$GITHUB_OUTPUT"
-          echo "COMMENT_URL=$(gh pr comment -R "${REPO:-$GITHUB_REPOSITORY}" "$PR_ID" --body "$COMMENT_BODY")" >> "$GITHUB_OUTPUT"
-        env:
-          CATEGORIES: ${{ inputs.category }}
-          FILTER: ${{ inputs.filter }}
-          GH_TOKEN: ${{ inputs.token || github.token }}
-          REPO: ${{ inputs.repo }}
-          PR_ID: ${{ inputs.pr_id }}
-  build:
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - runner: ubuntu-24.04
-            system: x86_64-linux
-          - runner: ubuntu-24.04-arm
-            system: aarch64-linux
-          - runner: macos-15-intel
-            system: x86_64-darwin
-          - runner: macos-latest
-            system: aarch64-darwin
-    name: '${{ matrix.system }}: with shared libraries'
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          repository: ${{ inputs.repo || github.repository }}
-          ref: refs/pull/${{ inputs.pr_id }}/merge
-          persist-credentials: false
-          fetch-depth: 2
-
-      - name: Validate PR head and roll back to base commit
-        run: |
-          [ "$(git rev-parse HEAD^2)" = "$EXPECTED_SHA" ]
-          git reset HEAD^ --hard
-        env:
-          EXPECTED_SHA: ${{ inputs.commit }}
-
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3  # v31.10.6
-        with:
-          extra_nix_config: sandbox = true
-
-      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71  # v17
-        with:
-          # We do not pass any `authToken` to avoid polluting the cache with potentially untrusted code.
-          name: nodejs
-
-      - name: Configure sccache
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
-        with:
-          script: |
-            core.exportVariable('SCCACHE_GHA_VERSION', 'on');
-            core.exportVariable('ACTIONS_CACHE_SERVICE_V2', 'on');
-            core.exportVariable('ACTIONS_RESULTS_URL', process.env.ACTIONS_RESULTS_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
-      - name: Build Node.js on the base commit
-        run: |
-          nix-shell \
-            -I nixpkgs=./tools/nix/pkgs.nix \
-            --pure --keep TAR_DIR --keep FLAKY_TESTS \
-            --keep SCCACHE_GHA_ENABLED --keep ACTIONS_CACHE_SERVICE_V2 --keep ACTIONS_RESULTS_URL --keep ACTIONS_RUNTIME_TOKEN \
-            --arg useSeparateDerivationForV8 true \
-            --arg loadJSBuiltinsDynamically false \
-            --arg ccache "${NIX_SCCACHE:-null}" \
-            --arg devTools '[]' \
-            --arg benchmarkTools '[]' \
-            --run '
-                make build-ci -j4 V=1
-            '
-          mv out/Release/node base_node
-
-      - name: Checkout the merge commit
-        run: git reset FETCH_HEAD --hard
-
-      - name: Re-build Node.js on the merge commit
-        # ccache is disabled here to avoid polluting the cache. Local build outputs should make this build relatively quick anyway.
-        run: |
-          nix-shell \
-            -I nixpkgs=./tools/nix/pkgs.nix \
-            --pure \
-            --arg useSeparateDerivationForV8 true \
-            --arg loadJSBuiltinsDynamically false \
-            --arg ccache 'null' \
-            --arg devTools '[]' \
-            --arg benchmarkTools '[]' \
-            --run '
-                make -j4 V=1
-            '
-
-      - name: Run benchmark
-        run: |
-          nix-shell \
-            -I nixpkgs=./tools/nix/pkgs.nix \
-            --pure --keep FILTER --keep LC_ALL --keep LANG \
-            --arg loadJSBuiltinsDynamically false \
-            --arg ccache 'null' \
-            --arg icu 'null' \
-            --arg sharedLibDeps '{}' \
-            --arg devTools '[]' \
-            --run '
-                set -o pipefail
-                ./base_node benchmark/compare.js \
-                  --filter "$FILTER" \
-                  --runs ${{ inputs.runs }} \
-                  --old ./base_node --new ./node \
-                  -- ${{ inputs.category }} \
-                | tee /dev/stderr \
-                > ${{ matrix.system }}.csv
-                echo "> [!WARNING] "
-                echo "> Do not take GHA benchmark results as face value, always confirm them"
-                echo "> using a dedicated machine, e.g. Jenkins CI."
-                echo
-                echo "Benchmark results:"
-                echo
-                echo '"'"'```'"'"'
-                Rscript benchmark/compare.R < ${{ matrix.system }}.csv
-                echo '"'"'```'"'"'
-                echo
-                echo "> [!WARNING] "
-                echo "> Do not take GHA benchmark results as face value, always confirm them"
-                echo "> using a dedicated machine, e.g. Jenkins CI."
-            ' | tee /dev/stderr >> "$GITHUB_STEP_SUMMARY"
-        env:
-          FILTER: ${{ inputs.filter }}
-
-      - name: Upload raw benchmark results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
-        with:
-          name: csv-${{ matrix.system }}
-          path: ${{ matrix.system }}.csv
-
   aggregate-results:
-    needs: [build, post-comment]
-    if: ${{ always() && needs.build.result == 'success' && needs.post-comment.result == (inputs.post-comment && 'success' || 'skipped') }}
     name: Aggregate benchmark results
-    runs-on: ubuntu-slim
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     include:
+    #       - runner: ubuntu-24.04
+    #         system: x86_64-linux
+    #       - runner: ubuntu-24.04-arm
+    #         system: aarch64-linux
+    #       # - runner: macos-15-intel
+    #       #   system: x86_64-darwin
+    #       - runner: macos-latest
+    #         system: aarch64-darwin
+    runs-on: ubuntu-latest # slim # ${{ matrix.runner }}
     permissions:
       contents: read
       pull-requests: write
@@ -199,9 +30,8 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: |
-            benchmark/*.R
-            tools/nix/*.nix
-            *.nix
+            tools/nix/
+            shell.nix
           sparse-checkout-cone-mode: false
 
       - name: Download benchmark raw results
@@ -210,18 +40,102 @@ jobs:
           pattern: csv-*
           merge-multiple: true
           path: raw-results
+          repository: nodejs/node
+          github-token: ${{ secrets.GH_USER_TOKEN }}
+          run-id: 29243127788
 
       - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3  # v31.10.6
         with:
           extra_nix_config: sandbox = true
+          # extra_nix_config: |
+          #   sandbox = true
+          #   trusted-public-keys = nodejs-test.cachix.org-1:WvIzKH8IKBPG+VBNgA33RHVP11pL42HiqYSfvLYjwBc= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          #   substituters = https://nodejs-test.cachix.org https://cache.nixos.org/
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71  # v17
+        with:
+          name: nodejs-test
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Benchmark results
         run: |
-          nix-shell \
+          # nix-shell \
+          #  --pure \
+          DRV=$(nix-build --no-out-link \
             -I nixpkgs=./tools/nix/pkgs.nix \
-            --pure \
-            -E '(import <nixpkgs> {}).mkShell { buildInputs = import ./tools/nix/benchmarkTools.nix { withHttpBenchmarkDeps = false; }; }' \
-            --run '
+            -E '(import <nixpkgs> {}).mkShellNoCC {
+              buildInputs = import ./tools/nix/benchmarkTools.nix {
+                withHttpBenchmarkDeps = false;
+              }; }')
+          while IFS= read -r drv; do
+            nix why-depends --precise "$DRV" "$drv"
+            sleep 1
+          done <<'EOF'
+          /nix/store/38n0ganzvrlk08c8l3wbwxzsqmxgqi6j-acl-2.4.0
+          /nix/store/r88gpfhsd1bww3bz9cl5crrxnwg5kiap-attr-2.6.0
+          /nix/store/7ik8057hajl6vq9j40h3jracxjn0bb5x-bash-5.3p15
+          /nix/store/bwry105g7v5jspr41bx9x3fcfqsmfkq2-bash-interactive-5.3p15
+          /nix/store/ffv6vz8kps2qz63xq85ksfz0iwvvvq7w-blas-3
+          /nix/store/5ip9nvln2q56cqwxc4ijmpvnmj5vfxlb-bzip2-1.0.8
+          /nix/store/ahlj2fipymncli1pmb8y5bbyjzqrw4zk-bzip2-1.0.8-bin
+          /nix/store/di26b1kkbammy0sj70nq5qzvfrh78wxl-coreutils-9.11
+          /nix/store/idrw81wx0q514npff4795bn19f7hdswb-curl-8.21.0
+          /nix/store/2fj4q3rg23fikdb43m039c967scsr5d9-diffutils-3.12
+          /nix/store/xsaclnvars896fzd98jgfsz784jmzlr3-ed-1.22.5
+          /nix/store/784nd0cwrm99bzqwkx4fzd9j6vz4kxpm-file-5.48
+          /nix/store/fcqbwp5hx5wh3lzf0457wmf0divknz7y-findutils-4.11.0
+          /nix/store/l0pfzsyrxmgfbzxxzxpwi6j6mhnkyrcr-gawk-5.4.1
+          /nix/store/w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib
+          /nix/store/hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc
+          /nix/store/vyg83i3rmq3vhwp1x9yz2yjs7jcik1dr-gfortran-15.3.0-lib
+          /nix/store/208hrxi0b1vizflzw1343jmlg1xwfima-gfortran-15.3.0-libgcc
+          /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67
+          /nix/store/6z90l28w0aqfqgb34gzh3linnci8k1id-gmp-with-cxx-6.3.0
+          /nix/store/qlpiji0zybs4hl1dw00nfvl60fnlg90j-gnu-config-2024-01-01
+          /nix/store/aak8d9mrdv9sgn0lcg7xss7wxdg9sqh3-gnugrep-3.12
+          /nix/store/pqqnhh0960k1a10jm41lgnq5vrxzs05x-gnumake-4.4.1
+          /nix/store/7mfsmbhsd3arnypipwm251rcd0b45riy-gnused-4.10
+          /nix/store/iwfv3zbkmmphvwqp05kd7r55n3vfcfyd-gnutar-1.35
+          /nix/store/8dlps0306xac4yf2m85iqk0k8ppbd5yx-gzip-1.14
+          /nix/store/7gzli4v63mrj9ai0ypsbwmpvyjmp6h0c-lapack-3
+          /nix/store/7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8
+          /nix/store/sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2
+          /nix/store/w11kc8r5ixj3ir37q8ndrv82gimr5vjd-ncurses-6.6
+          /nix/store/h1spxd2iij2l2ln2jk33mmx7kk7xhvph-openblas-0.3.33
+          /nix/store/39jzpf9ray7mxjnlmqbrxlyz0dsz0448-openssl-3.6.3
+          /nix/store/jdiqg2lw2bkpvfdw0rjdn6iaxv48rxpn-patch-2.8
+          /nix/store/pzvcwi6y0vfmfpni6b52jwy9x6sj1yv1-patchelf-0.15.2
+          /nix/store/gvn2w8kxsxdjh1nsw88gp9fjyrcxwmkj-pcre2-10.47
+          /nix/store/v5f47sa2rsbhyzzacswf0zy19j5h91ca-r-R6-2.6.1
+          /nix/store/j6kmpz6b8fr51mnf0ya5vw28aafaplrs-r-RColorBrewer-1.1-3
+          /nix/store/bxga5a1jd4spk8125i696iclrds98rky-r-Rcpp-1.1.2
+          /nix/store/5dwk28c3jx1yv0inhy62cbyd34gzdlam-r-S7-0.2.2
+          /nix/store/jw2awyqxh208qcxbjij7z2dmyz0f618s-r-cli-3.6.6
+          /nix/store/x603imxzdqjlalsqswah87bqvp3s4mv0-r-cpp11-0.5.5
+          /nix/store/wcw989snnmlhi8kqvpv8ad9mnz170hzx-r-farver-2.1.2
+          /nix/store/mh7w6m24jpnknfglbvys4kb3l4gf5ww9-r-ggplot2-4.0.3
+          /nix/store/jwzvmz4q92b603ssvkm44ply77fml8w2-r-glue-1.8.1
+          /nix/store/368dv89v9r3rqpm8v41lsh1mwc7ghga8-r-gtable-0.3.6
+          /nix/store/dg846vz8wwd5hv943l0w91s1hmh6wdgy-r-isoband-0.3.0
+          /nix/store/zaarwi023qi6baq4wrbwyxidawkm77j8-r-labeling-0.4.3
+          /nix/store/mnr1x5waa7zi6p8nc5w91qmvj8zbj99b-r-lifecycle-1.0.5
+          /nix/store/kw1612r4yd2915g5lm9xdrnk2lgg0yls-r-plyr-1.8.9
+          /nix/store/jgc81k1ddzq0q9vcl2pj3qhqlrjl2dm7-r-rlang-1.3.0
+          /nix/store/55d89aasixbbw8xjmg0xb3v63j29gw5s-r-scales-1.4.0
+          /nix/store/wv64lh0y1xrdca7s8420r1si52birlzi-r-vctrs-0.7.3
+          /nix/store/7cadhb49532jz3xzca291nwrfbblnk0b-r-viridisLite-0.4.3
+          /nix/store/hw09jqm5rm5knlwbdjb716hqxqbf7z9x-r-withr-3.0.3
+          /nix/store/rrqlx2czgin1x4w9j8lsvmsmq6v4zkb0-readline-8.3p3
+          /nix/store/7hl43a3zjil847l66i3ml2adhnmbyw3p-stdenv-linux-no-cc
+          /nix/store/2nndxyf3phkb5aggxm3c16sapa0f49kz-tzdata-2026c
+          /nix/store/ya8cl7vzwcaf32zwhkgs1xzrwwlk9g93-update-autotools-gnu-config-scripts-hook
+          /nix/store/i03xl4gzrfywjvs1y47908m302zd94sn-which-2.25
+          /nix/store/g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc
+          /nix/store/bybssc25s0zbp9iz0b0k9cb3ysgcjpyj-xz-5.8.3
+          /nix/store/75jq54q1qfv5n6hxxp8bd9yb6kc1yiz4-xz-5.8.3-bin
+          /nix/store/fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2
+          EOF
+            true || cc --run '
                 export LC_ALL=C.UTF-8
                 echo "> [!WARNING] "
                 echo "> Do not take GHA benchmark results as face value, always confirm them"
@@ -237,29 +151,3 @@ jobs:
                 echo "> Do not take GHA benchmark results as face value, always confirm them"
                 echo "> using a dedicated machine, e.g. Jenkins CI."
             ' | tee /dev/stderr ${{ inputs.post-comment && 'body.txt' || '' }} >> "$GITHUB_STEP_SUMMARY"
-      - name: Mark token input as sensitive
-        if: inputs.token != ''
-        run: echo "::add-mask::${{ inputs.token }}"
-      - name: Edit comment
-        if: inputs.post-comment
-        run: |
-          {
-            echo "$COMMENT_BODY"
-            echo
-            echo '<details><summary>Results</summary>'
-            echo
-            cat body.txt
-            echo
-            echo '</details>'
-          } | jq -Rrcs '{ body: . }' | gh api \
-            --method PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            "/repos/${REPO:-$GITHUB_REPOSITORY}/issues/comments/${COMMENT_URL##*-}" \
-            --input -
-        env:
-          GH_TOKEN: ${{ inputs.token || github.token }}
-          REPO: ${{ inputs.repo }}
-          COMMENT_BODY: ${{ needs.post-comment.outputs.body }}
-          COMMENT_URL: ${{ needs.post-comment.outputs.url }}
-          PR_ID: ${{ inputs.pr_id }}

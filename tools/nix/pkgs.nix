@@ -1,11 +1,11 @@
 arg:
 let
   repo = "https://github.com/NixOS/nixpkgs";
-  rev = "20535e48e12c86043b577b8518234ff5dbb26957";
+  rev = "a1ddb745f852935c2986bc9cda001a9d954965e5";
   nixpkgs = import (builtins.fetchTarball {
     url = "${repo}/archive/${rev}.tar.gz";
-    sha256 = "1dmdschkpmhjp67rhsig7k2qhgd918j5g30s6yxmjljqsxh2vlh9";
-  }) arg;
+    sha256 = "0aiardyh6zzrp39cliypfwmmsnbmkbbgnwsndzdldffw7jgij30c";
+  }) (arg // { overlays = (arg.overlays or [ ]) ++ [ (import ./R-overlay.nix) ]; });
 in
 # Unstable channel no longer supports Intel architecture for macOS. We can use the 26.05 channel
 # to keep testing on that platform for a little longer.
