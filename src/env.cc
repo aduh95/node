@@ -851,7 +851,7 @@ Environment::Environment(IsolateData* isolate_data,
                          ThreadId thread_id,
                          std::string_view thread_name)
     : isolate_(isolate),
-      external_memory_accounter_(new ExternalMemoryAccounter()),
+      external_memory_accounter_(std::make_unique<ExternalMemoryAccounter>()),
       isolate_data_(isolate_data),
       async_hooks_(isolate, MAYBE_FIELD_PTR(env_info, async_hooks)),
       immediate_info_(isolate, MAYBE_FIELD_PTR(env_info, immediate_info)),
@@ -1135,7 +1135,6 @@ Environment::~Environment() {
     }
   }
 
-  delete external_memory_accounter_;
   if (cpu_profiler_) {
     for (auto& it : pending_profiles_) {
       cpu_profiler_->Stop(it);
