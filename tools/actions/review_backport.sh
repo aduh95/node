@@ -11,7 +11,7 @@ BACKPORT_PR=$1
     echo "Usage:" >&2
     echo 'tools/actions/review_backport.sh https://github.com/nodejs/node/pull/<backport-PR-number> | less' >&2
     echo 'DIFF_CMD="codium --wait --diff" tools/actions/review_backport.sh https://github.com/nodejs/node/pull/<backport-PR-number>' >&2
-    echo "Limitations: This tools only supports PRs that landed as single commit, e.g. with 'commit-queue-squash' label." >&2
+    echo "Limitations: This tool assumes the backport includes all the commits from the original order, in the same order." >&2
 
     exit 1
 }
@@ -26,12 +26,15 @@ ORIGINAL=$(mktemp)
 BACKPORT=$(mktemp)
 trap 'set -x; rm -f "$ORIGINAL" "$BACKPORT"; set +x; trap - EXIT; exit' EXIT INT HUP
 
-gh pr view "$BACKPORT_PR" --json commits --jq '.[] | map([ .oid, (.messageBody | match("(?:^|\\n)PR-URL: (https?://.+/pull/\\d+)(?:\\n|$)", "g") | .captures | last | .string)] | @tsv) | .[]' \
+PREVIOUS_PR_URL=
+
+gh pr view "$BACKPORT_PR_URL" --json commits --jq '.[] | map([ .oid, (.messageBody | match("(?:^|\\n)PR-URL: (https?://.+/pull/\\d+)(?:\\n|$)", "g") | .captures | last | .string)] | @tsv) | .[]' \
 | while read -r LINE; do
   COMMIT_SHA=$(echo "$LINE" | cut -f1)
   PR_URL=$(echo "$LINE" | cut -f2)
 
-  curl -fsL "$PR_URL.diff" | sed "$SED_CMD" >> "$ORIGINAL"
+  [ "$PREVIOUS_PR_URL" = "$PR_URL" ] || curl -fsL "$PR_URL.diff" | sed "$SED_CMD" >> "$ORIGINAL"
+  PREVIOUS_PR_URL="$PR_URL"
   curl -fsL "$BACKPORT_PR_URL/commits/$COMMIT_SHA.diff" | sed "$SED_CMD" >> "$BACKPORT"
 done
 
@@ -43,5 +46,5 @@ printf "Approve the PR using gh? [y/N] "
 read -r r
 [ "$r" != "y" ] || {
   set -x
-  gh pr review "$BACKPORT_PR" --approve
+  gh pr review "$BACKPORT_PR_URL" --approve
 }
