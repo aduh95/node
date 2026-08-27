@@ -4612,7 +4612,7 @@ throwing an error. This behavior is inconsistent with `hash.digest()` and
 may lead to subtle bugs. Calling `hmac.digest()` on a finalized `Hmac` instance
 will throw an error in a future version.
 
-### DEP0207: `.aborted` property and `'aborted'` event in `http2`
+### DEP0207: `.aborted` property and `'aborted'` event in `node:http2`
 
 <!-- YAML
 changes:
@@ -4684,6 +4684,7 @@ removed in a future version of Node.js. Use [`server.listen()`][] instead of
 calling or overriding `_listen2`.
 
 [DEP0142]: #dep0142-repl_builtinlibs
+[DEP0156]: #dep0156-aborted-property-and-abort-aborted-event-in-http
 [NIST SP 800-38D]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
 [RFC 6066]: https://tools.ietf.org/html/rfc6066#section-3
 [RFC 8247 Section 2.4]: https://www.rfc-editor.org/rfc/rfc8247#section-2.4

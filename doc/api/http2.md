@@ -1270,7 +1270,11 @@ destroyed.
 
 <!-- YAML
 added: v8.4.0
+deprecated: REPLACEME
 -->
+
+> Stability: 0 - Deprecated. Use `'close'` and `'error'` plus
+> `stream.destroyed`.
 
 The `'aborted'` event is emitted whenever a `Http2Stream` instance is
 abnormally aborted in mid-communication.
@@ -1380,9 +1384,12 @@ option must be set for this event to be emitted.
 
 <!-- YAML
 added: v8.4.0
+deprecated: REPLACEME
 -->
 
 * Type: {boolean}
+
+> Stability: 0 - Deprecated.
 
 Set to `true` if the `Http2Stream` instance was aborted abnormally. When set,
 the `'aborted'` event will have been emitted.
