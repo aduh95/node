@@ -1,7 +1,44 @@
 import json
+import re
 import argparse
 from datetime import datetime
 import matplotlib.pyplot as plt
+
+# e.g. "## 2026-04-01, Version 25.9.0 (Current), @aduh95"
+RELEASE_RE = re.compile(r'^## (\d{4}-\d{2}-\d{2}), Version (\d+\.(?:[1-9]\d*\.\d+|0\.[1-9]\d*))')
+HEADING_RE = re.compile(r'^(#{2,6})\s+(.*)')
+COMMITS_HEADING_RE = re.compile(r'\bCommits\b')
+# e.g. "* \[[`92ef2ad8fa`](https://github.com/nodejs/node/commit/92ef2ad8fa)] - ..."
+COMMIT_RE = re.compile(r'^\* \\\[\[`[0-9a-f]+`\]')
+
+
+def parse(path):
+    releases = []
+    current = None
+    in_commits = False
+    commits_level = 0
+    with open(path, encoding='utf-8') as f:
+        for line in f:
+            m = RELEASE_RE.match(line)
+            if m:
+                date, version = m.groups()
+                current = {'version': version, 'closedAt': f"{date}T00:00:00Z", 'commits': { 'totalCount': 0 }}
+                releases.append(current)
+                in_commits = False
+                continue
+            if current is None:
+                continue
+            h = HEADING_RE.match(line)
+            if h:
+                level, title = len(h.group(1)), h.group(2)
+                if COMMITS_HEADING_RE.search(title):
+                    in_commits, commits_level = True, level
+                elif level <= commits_level:
+                    in_commits = False
+            elif in_commits and COMMIT_RE.match(line):
+                current['commits']['totalCount'] += 1
+    return releases
+
 
 def parse_iso_date(date_str):
     """Parse GitHub's ISO 8601 timestamp."""
@@ -90,17 +127,49 @@ def generate_svg(release_groups, output_filename="cumulative_commits.svg"):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate an SVG graph from GitHub PR JSON data.")
-    parser.add_argument("input_file", help="Path to the JSON file containing PR data")
+    # parser.add_argument("input_file", help="Path to the JSON file containing PR data")
     parser.add_argument("-o", "--output", default="cumulative_commits.svg", help="Output SVG filename")
     args = parser.parse_args()
 
     # Load JSON
-    try:
-        with open(args.input_file, "r") as f:
-            data = json.load(f)
-    except Exception as e:
-        print(f"Error reading JSON file: {e}")
-        return
+    # try:
+    #     with open(args.input_file, "r") as f:
+    #         data = json.load(f)
+    # except Exception as e:
+    #     print(f"Error reading JSON file: {e}")
+    #     return
+
+    data = []
+    for i in range(16,27):
+        data += [(j | {"labels": {
+
+              "nodes": [
+
+                {
+
+                  "name": "release"
+
+                },
+
+                {
+
+                  "name": f"v{i}.x"
+
+                }
+
+              ]
+
+            }}) for j in parse(f"./doc/changelogs/CHANGELOG_V{i}.md")]
+    data =  {
+
+  "data": {
+
+    "repository": {
+
+      "pullRequests": {
+
+        "nodes": data
+      }}}}
 
     # Process and Plot
     release_groups = extract_release_data(data)
