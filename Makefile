@@ -1112,6 +1112,7 @@ HAS_XZ ?= $(shell command -v xz > /dev/null 2>&1; [ $$? -eq 0 ] && echo 1 || ech
 # Supply SKIP_XZ=1 to explicitly skip .tar.xz creation
 SKIP_XZ ?= 0
 XZ = $(shell [ $(HAS_XZ) -eq 1 ] && [ $(SKIP_XZ) -eq 0 ] && echo 1 || echo 0)
+GZ_COMPRESSION ?= 9
 XZ_COMPRESSION ?= 9e
 PKG=$(TARNAME).pkg
 MACOSOUTDIR=out/macos
@@ -1321,7 +1322,7 @@ endif
 	find $(TARNAME)/ -type l | xargs $(RM)
 	tar -cf $(TARNAME).tar $(TARNAME)
 	$(RM) -r $(TARNAME)
-	gzip -c -f -9 $(TARNAME).tar > $(TARNAME).tar.gz
+	gzip -c -f -$(GZ_COMPRESSION) $(TARNAME).tar > $(TARNAME).tar.gz
 ifeq ($(XZ), 1)
 	xz -c -f -$(XZ_COMPRESSION) $(TARNAME).tar > $(TARNAME).tar.xz
 endif
@@ -1366,7 +1367,7 @@ $(TARBALL)-headers: release-only
 	find $(TARNAME)/ -type l | xargs $(RM)
 	tar -cf $(TARNAME)-headers.tar $(TARNAME)
 	$(RM) -r $(TARNAME)
-	gzip -c -f -9 $(TARNAME)-headers.tar > $(TARNAME)-headers.tar.gz
+	gzip -c -f -$(GZ_COMPRESSION) $(TARNAME)-headers.tar > $(TARNAME)-headers.tar.gz
 ifeq ($(XZ), 1)
 	xz -c -f -$(XZ_COMPRESSION) $(TARNAME)-headers.tar > $(TARNAME)-headers.tar.xz
 endif
@@ -1411,7 +1412,7 @@ ifeq ($(OSTYPE),darwin)
 endif
 	tar -cf $(BINARYNAME).tar $(BINARYNAME)
 	$(RM) -r $(BINARYNAME)
-	gzip -c -f -9 $(BINARYNAME).tar > $(BINARYNAME).tar.gz
+	gzip -c -f -$(GZ_COMPRESSION) $(BINARYNAME).tar > $(BINARYNAME).tar.gz
 ifeq ($(XZ), 1)
 	xz -c -f -$(XZ_COMPRESSION) $(BINARYNAME).tar > $(BINARYNAME).tar.xz
 endif

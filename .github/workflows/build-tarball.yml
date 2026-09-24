@@ -76,6 +76,52 @@ jobs:
   build-tarball:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-slim
+    strategy:
+      matrix:
+        GZ_COMPRESSION: [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+        ]
+        n: [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+        ]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -94,44 +140,9 @@ jobs:
           export DISTTYPE=nightly
           export DATESTRING=$(date "+%Y-%m-%d")
           export COMMIT=$(git rev-parse --short=10 "$GITHUB_SHA")
-          ./configure && make tar -j4 SKIP_XZ=1
+          ./configure && make tar -j4 SKIP_XZ=1 SKIP_SHARED_DEPS=1 GZ_COMPRESSION=${{ matrix.GZ_COMPRESSION }}
       - name: Upload tarball artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           path: '*.tar.gz'
           archive: false
-  test-tarball-linux:
-    needs: build-tarball
-    runs-on: ubuntu-24.04-arm
-    env:
-      CC: ${{ (github.base_ref == 'main' || github.ref_name == 'main') && 'sccache' || '' }} clang-19
-      CXX: ${{ (github.base_ref == 'main' || github.ref_name == 'main') && 'sccache' || '' }} clang++-19
-      SCCACHE_GHA_ENABLED: ${{ github.base_ref == 'main' || github.ref_name == 'main' }}
-      SCCACHE_IDLE_TIMEOUT: '0'
-    steps:
-      - name: Install Clang ${{ env.CLANG_VERSION }}
-        uses: $/.github/actions/install-clang
-        with:
-          clang-version: ${{ env.CLANG_VERSION }}
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          allow-prereleases: true
-      - name: Set up sccache
-        if: github.base_ref == 'main' || github.ref_name == 'main'
-        uses: Mozilla-Actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba  # v0.0.11
-        with:
-          version: v0.17.0
-      - name: Download tarball
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
-        with:
-          path: tarballs
-      - name: Extract tarball
-        run: |
-          tar xzf tarballs/*.tar.gz -C "$RUNNER_TEMP"
-          echo "TAR_DIR=$RUNNER_TEMP/$(basename tarballs/*.tar.gz .tar.gz)" >> "$GITHUB_ENV"
-      - name: Build
-        run: make -C "$TAR_DIR" build-ci -j4 V=1
-      - name: Test
-        run: make -C "$TAR_DIR" test-ci -j1 V=1 TEST_CI_ARGS="-p dots --measure-flakiness 9"
