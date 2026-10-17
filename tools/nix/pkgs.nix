@@ -21,14 +21,14 @@ else
         inherit (nixpkgs) boringssl lib writeTextFile;
       in
       writeTextFile {
-        name = "boringssl.pc";
+        inherit (boringssl) name;
         destination = "/lib/pkgconfig/openssl.pc";
         text = ''
           Name: BoringSSL
           Description: BoringSSL cryptography library
           Version: ${boringssl.version}
-          Libs: -L${lib.getLib boringssl} -lcrypto -lssl
-          Cflags: -I${lib.getInclude boringssl}
+          Libs: -L${lib.getLib boringssl}/lib -lcrypto -lssl
+          Cflags: -I${lib.getInclude boringssl}/include
         '';
       };
 
