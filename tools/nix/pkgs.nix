@@ -21,7 +21,7 @@ else
         inherit (nixpkgs) boringssl lib writeTextFile;
       in
       writeTextFile {
-        name = "openssl.pc";
+        name = "boringssl.pc";
         destination = "/lib/pkgconfig/openssl.pc";
         text = ''
           Name: BoringSSL

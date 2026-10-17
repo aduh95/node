@@ -2204,7 +2204,9 @@ def configure_library(lib, output, pkgname=None, libraries_key='libraries'):
     elif pkg_libs:
       libraries += pkg_libs.split()
     else:
-      libraries += [f'-l{l}' for l in (pkgname or lib)]
+      pkg = (pkgname or lib)
+      if not isinstance(pkg, list): pkg += [pkg]
+      libraries += [f'-l{l}' for l in pkg]
 
 
 def configure_v8(o, configs):
