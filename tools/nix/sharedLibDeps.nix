@@ -27,15 +27,17 @@
   hdr-histogram = pkgs.hdrhistogram_c;
   highway = pkgs.libhwy;
   http-parser = pkgs.llhttp;
+
+  # TODO: remove this override once the pin we use has picked up https://github.com/NixOS/nixpkgs/pull/575002
   uvwasi = pkgs.uvwasi.overrideAttrs (old: {
     patches = old.patches ++ [
       (pkgs.fetchpatch2 {
-        url = "https://github.com/nodejs/uvwasi/pull/326.patch";
-        hash = "sha256-PPr62+qycCSfr1/JWXhJS6X8vW10ea2b4L4361tdwgE=";
+        url = "https://github.com/nodejs/uvwasi/commit/fe602a6911207efd8dcfc070a752bcf76813c978.patch?full_index=1";
+        hash = "sha256-MyFvRuEhcqZR+Bz2pY9vani8U1iyQrDeni2kKKnJGEI=";
       })
     ];
 
-    buildInputs = [];
+    buildInputs = [ ];
     propagatedBuildInputs = old.buildInputs;
   });
 }

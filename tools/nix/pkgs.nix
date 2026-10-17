@@ -15,6 +15,23 @@ if builtins.currentSystem == "x86_64-darwin" then
 else
   nixpkgs
   // {
+    # TODO: remove this when the pin we use has picked up https://boringssl-review.googlesource.com/c/boringssl/+/104208
+    boringssl =
+      let
+        inherit (nixpkgs) boringssl lib writeTextFile;
+      in
+      writeTextFile {
+        name = "openssl.pc";
+        destination = "/lib/pkgconfig/openssl.pc";
+        text = ''
+          Name: BoringSSL
+          Description: BoringSSL cryptography library
+          Version: ${boringssl.version}
+          Libs: -L${lib.getLib boringssl} -lcrypto -lssl
+          Cflags: -I${lib.getInclude boringssl}
+        '';
+      };
+
     # TODO: remove pin once https://github.com/mozilla/sccache/issues/2869 is resolved
     sccache = nixpkgs.callPackage (builtins.fetchurl {
       url = "${repo}/raw/aff8a0b28396750446e5537a96461bc4facdb287/pkgs/by-name/sc/sccache/package.nix";

@@ -2197,12 +2197,14 @@ def configure_library(lib, output, pkgname=None, libraries_key='libraries'):
     elif pkg_libpath:
       libraries += [pkg_libpath]
 
-    default_libs = getattr(options, shared_lib + '_libname')
+    user_provided_value = getattr(options, shared_lib + '_libname')
 
-    if default_libs:
-      libraries += [f'-l{l}' for l in default_libs.split(',')]
+    if user_provided_value is not None:
+      libraries += [f'-l{l}' for l in user_provided_value.split(',')]
     elif pkg_libs:
       libraries += pkg_libs.split()
+    else:
+      libraries += [f'-l{l}' for l in (pkgname or lib)]
 
 
 def configure_v8(o, configs):
