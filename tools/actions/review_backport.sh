@@ -35,7 +35,7 @@ trap 'set -x; rm -f "$ORIGINAL" "$BACKPORT" "$BUFFER"; set +x; trap - EXIT; exit
 curl -fsSLo "$BUFFER" "$BACKPORT_PR_URL.patch"
 sed "$SED_CMD" "$BUFFER" > "$BACKPORT"
 
-COMMITS=$(
+BACKPORTED_COMMITS=$(
   gh pr view "$BACKPORT_PR" --json commits --jq '
     .[]
     | map(
@@ -54,7 +54,7 @@ COMMITS=$(
 )
 
 LAST_FETCHED=
-COMMIT_RANGES=
+ORIGINAL_COMMITS=
 while IFS= read -r LINE; do
   COMMIT_SHA=$(echo "$LINE" | cut -f1)
   COMMIT_TITLE=$(echo "$LINE" | cut -f2)
@@ -83,12 +83,14 @@ EOF
       echo "Error: Could not locate landed commit with title '$COMMIT_TITLE' in $REMOTE/$ORIGINAL_BASE" >&2
       continue
   }
-  COMMIT_RANGES="${COMMIT_RANGES:+$COMMIT_RANGES }${ORIGINAL_COMMIT}"
+  ORIGINAL_COMMITS="${ORIGINAL_COMMITS:+$ORIGINAL_COMMITS }${ORIGINAL_COMMIT}"
 done <<EOF
-${COMMITS:?No commits found in PR $BACKPORT_PR}
+${BACKPORTED_COMMITS:?No commits found in PR $BACKPORT_PR}
 EOF
 
-git format-patch --no-signature --stdout --root --no-walk ${COMMIT_RANGES:?No original commits resolved} > "$BUFFER"
+xargs git format-patch --no-signature --stdout --root --no-walk > "$BUFFER" <<EOF
+${ORIGINAL_COMMITS:?Could not find any commit being backported}
+EOF
 sed "$SED_CMD" "$BUFFER" > "$ORIGINAL"
 ${DIFF_CMD:-diff} "$ORIGINAL" "$BACKPORT" || echo "diff command exited with $?" >&2
 
