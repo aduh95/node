@@ -19,6 +19,7 @@ SED_CMD=
 SED_CMD="${SED_CMD};"'s/^index [a-f0-9]\+..[a-f0-9]\+\( [0-7]\{6\}\)\?$/index eeeeeeeeee..eeeeeeeeee\1/g'
 SED_CMD="${SED_CMD};"'s/^From [a-f0-9]\{40\} /From 0000000000000000000000000000000000000000 /'
 SED_CMD="${SED_CMD};"'s/^@@ -[0-9]\+,[0-9]\+ +[0-9]\+,[0-9]\+ @@/@@ -111,1 +111,1 @@/'
+SED_CMD="${SED_CMD};"'s#^\(Subject: [PATCH [0-9]\+\)/[0-9]\+]#\1]#'
 
 set -ex
 
@@ -28,36 +29,67 @@ BACKPORT_PR_URL=$(gh pr view "$BACKPORT_PR" --json url --jq .url)
 
 ORIGINAL=$(mktemp)
 BACKPORT=$(mktemp)
-trap 'set -x; rm -f "$ORIGINAL" "$BACKPORT"; set +x; trap - EXIT; exit' EXIT INT HUP
+BUFFER=$(mktemp)
+trap 'set -x; rm -f "$ORIGINAL" "$BACKPORT" "$BUFFER"; set +x; trap - EXIT; exit' EXIT INT HUP
 
-${DIFF_CMD_NO_WAIT:-diff} "$ORIGINAL" "$BACKPORT"
+curl -fsSLo "$BUFFER" "$BACKPORT_PR_URL.patch"
+sed "$SED_CMD" "$BUFFER" > "$BACKPORT"
 
-gh pr view "$BACKPORT_PR" --json commits --jq '.[] | map([ .oid, .messageHeadline, (.messageBody | match("(?:^|\\n)PR-URL: (https?://.+/pull/\\d+)(?:\\n|$)", "g") | .captures | last | .string)] | @tsv) | .[]' \
-| while read -r LINE; do
+COMMITS=$(
+  gh pr view "$BACKPORT_PR" --json commits --jq '
+    .[]
+    | map(
+      [
+        .oid,
+        .messageHeadline, 
+        (
+          .messageBody
+          | match("(?:^|\\n)PR-URL: (https?://.+/pull/\\d+)(?:\\n|$)", "g")
+          | .captures
+          | last
+          | .string
+        )
+      ] | @tsv)
+    | .[]'
+)
+
+LAST_FETCHED=
+COMMIT_RANGES=
+while IFS= read -r LINE; do
   COMMIT_SHA=$(echo "$LINE" | cut -f1)
   COMMIT_TITLE=$(echo "$LINE" | cut -f2)
   PR_URL=$(echo "$LINE" | cut -f3)
 
   [ -n "$PR_URL" ] || {
       echo "Missing PR-URL in commit message for $COMMIT_SHA" >&2
-      exit 1
+      continue
   }
 
   ORIGINAL_BASE=$(gh pr view "$PR_URL" --json baseRefName -q '.baseRefName')
-  git fetch "$REMOTE" "$ORIGINAL_BASE"
+  [ "$ORIGINAL_BASE" = "$LAST_FETCHED" ] || {
+    git fetch "$REMOTE" "$ORIGINAL_BASE"
+    LAST_FETCHED="$ORIGINAL_BASE"
+  }
+  GIT_LOG_OUT=$(
+    git log FETCH_HEAD --fixed-strings --grep="$COMMIT_TITLE" --format="%H%x09%s%x09%(trailers:key=PR-URL,only,valueonly)"
+  )
   ORIGINAL_COMMIT=$(
-    git log FETCH_HEAD --fixed-strings --grep="$COMMIT_TITLE" --format="%H%x09%s%x09%(trailers:key=PR-URL,only,valueonly)" \
-    | awk -F'\t' -v t="$COMMIT_TITLE" -v p="$PR_URL" '$2 == t && $3 == p { print $1; exit }'
+    awk -F'\t' -v t="$COMMIT_TITLE" -v p="$PR_URL" '$2 == t && $3 == p { print $1; exit }' <<EOF
+$GIT_LOG_OUT
+EOF
   )
 
-  curl -fsL "$BACKPORT_PR_URL/commits/$COMMIT_SHA.patch" | sed "$SED_CMD" >> "$BACKPORT"
   [ -n "$ORIGINAL_COMMIT" ] || {
       echo "Error: Could not locate landed commit with title '$COMMIT_TITLE' in $REMOTE/$ORIGINAL_BASE" >&2
       continue
   }
-  git format-patch --no-signature --stdout "${ORIGINAL_COMMIT}^!" | sed "$SED_CMD" >> "$ORIGINAL"
-done
+  COMMIT_RANGES="${COMMIT_RANGES:+$COMMIT_RANGES }${ORIGINAL_COMMIT}"
+done <<EOF
+${COMMITS:?No commits found in PR $BACKPORT_PR}
+EOF
 
+git format-patch --no-signature --stdout --root --no-walk ${COMMIT_RANGES:?No original commits resolved} > "$BUFFER"
+sed "$SED_CMD" "$BUFFER" > "$ORIGINAL"
 ${DIFF_CMD:-diff} "$ORIGINAL" "$BACKPORT" || echo "diff command exited with $?" >&2
 
 set +x
