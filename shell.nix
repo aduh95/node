@@ -25,13 +25,14 @@
     import ./tools/nix/sharedLibDeps.nix {
       inherit
         pkgs
+        withFFI
         withLief
+        withPerfetto
         withQuic
         withSQLite
-        withFFI
         withSSL
-        withPerfetto
         withTemporal
+        withToml
         ;
     }
   ),

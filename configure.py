@@ -790,6 +790,27 @@ shared_optgroup.add_argument('--shared-temporal_capi-libpath',
     dest='shared_temporal_capi_libpath',
     help='a directory to search for the shared temporal_capi DLL')
 
+shared_optgroup.add_argument('--shared-tomlplusplus',
+    action='store_true',
+    dest='shared_tomlplusplus',
+    default=None,
+    help='link to a shared tomlplusplus DLL instead of static linking')
+
+shared_optgroup.add_argument('--shared-tomlplusplus-includes',
+    action='store',
+    dest='shared_tomlplusplus_includes',
+    help='directory containing tomlplusplus header files')
+
+shared_optgroup.add_argument('--shared-tomlplusplus-libname',
+    action='store',
+    dest='shared_tomlplusplus_libname',
+    help='alternative lib name to link to [default: %(default)s]')
+
+shared_optgroup.add_argument('--shared-tomlplusplus-libpath',
+    action='store',
+    dest='shared_tomlplusplus_libpath',
+    help='a directory to search for the shared tomlplusplus DLL')
+
 shared_optgroup.add_argument('--shared-zstd',
     action='store_true',
     dest='shared_zstd',
@@ -2539,6 +2560,9 @@ def configure_ffi(o):
 
 def configure_tomlplusplus(o):
   o['variables']['node_use_toml'] = b(options.with_toml)
+  if not options.with_toml and options.shared_tomlplusplus:
+    error('--shared-tomlplusplus requires --with-toml')
+  configure_library('tomlplusplus', o)
 
 def configure_quic(o):
   if options.experimental_quic and options.without_ssl:

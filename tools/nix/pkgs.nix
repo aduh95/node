@@ -38,4 +38,13 @@ else
           Cflags: -I${lib.getInclude boringssl}/include
         '';
       };
+
+    tomlplusplus = nixpkgs.tomlplusplus.overrideAttrs (old: {
+      version = "3.5.1";
+      src = old.src.override {
+        hash = "sha256-I10kkBxE5h052ZN2MfZVguk23XCxO/vQCeDkEXAcpto=";
+      };
+      patches = [ ];
+      mesonFlags = old.mesonFlags ++ [ "-Dcpp_eh=none" ];
+    });
   }
