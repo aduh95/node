@@ -33,6 +33,7 @@
     'node_shared_sqlite%': 'false',
     'node_shared_ffi%': 'false',
     'node_shared_temporal_capi%': 'false',
+    'node_shared_tomlplusplus%': 'false',
     'node_shared_uvwasi%': 'false',
     'node_shared_zlib%': 'false',
     'node_shared_zstd%': 'false',
@@ -901,6 +902,12 @@
             [ 'node_shared_tomlplusplus=="false"', {
               'dependencies': [
                 'deps/tomlplusplus/tomlplusplus.gyp:tomlplusplus',
+              ],
+            }, {
+              'defines': [
+                'TOML_EXCEPTIONS=0',
+                'TOML_HEADER_ONLY=0',
+                'TOML_SHARED_LIB=1',
               ],
             }],
           ],
