@@ -7,7 +7,6 @@
   withFFI ? true,
   withPerfetto ? false,
   withTemporal ? true,
-  withToml ? false,
 }:
 {
   inherit (pkgs)
@@ -61,7 +60,4 @@
 })
 // (pkgs.lib.optionalAttrs withTemporal {
   inherit (pkgs) temporal_capi;
-})
-// (pkgs.lib.optionalAttrs withToml {
-  inherit (pkgs) tomlplusplus;
 })
