@@ -1323,6 +1323,7 @@ ifeq ($(SKIP_SHARED_DEPS), 1)
 	$(RM) -r $(TARNAME)/deps/perfetto
 	$(RM) -r $(TARNAME)/deps/simdjson
 	$(RM) -r $(TARNAME)/deps/sqlite
+	$(RM) -r $(TARNAME)/deps/tomlplusplus
 	$(RM) -r $(TARNAME)/deps/uv
 	$(RM) -r $(TARNAME)/deps/uvwasi
 	$(RM) -r $(TARNAME)/deps/v8/third_party/abseil-cpp

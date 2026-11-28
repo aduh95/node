@@ -468,6 +468,11 @@
     }, {
       'defines': [ 'HAVE_SQLITE=0' ]
     }],
+    [ 'node_use_toml=="true"', {
+      'defines': [ 'HAVE_TOML=1' ],
+    }, {
+      'defines': [ 'HAVE_TOML=0' ]
+    }],
     [ 'node_use_ffi=="true"', {
       'defines': [ 'HAVE_FFI=1' ],
     }, {

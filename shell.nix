@@ -13,13 +13,14 @@
   # Build options
   icu ? pkgs.icu,
   withAmaro ? true,
+  withFFI ? true,
   withLief ? true,
+  withPerfetto ? false,
   withQuic ? false,
   withSQLite ? true,
-  withFFI ? true,
   withSSL ? true,
   withTemporal ? true,
-  withPerfetto ? false,
+  withToml ? false,
   sharedLibDeps ? (
     import ./tools/nix/sharedLibDeps.nix {
       inherit
@@ -138,6 +139,7 @@ pkgs.mkShell {
       ++ pkgs.lib.optional (!withSQLite) "--without-sqlite"
       ++ pkgs.lib.optional (!withFFI) "--without-ffi"
       ++ pkgs.lib.optional (!withSSL) "--without-ssl"
+      ++ pkgs.lib.optional (withToml) "--with-toml"
       ++ pkgs.lib.optional loadJSBuiltinsDynamically "--node-builtin-modules-path=${builtins.toString ./.}"
       ++ pkgs.lib.optional (useSeparateDerivationForV8 != false) "--without-bundled-v8"
       ++ builtins.map (name: "--shared-${name}") (

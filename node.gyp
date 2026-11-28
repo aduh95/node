@@ -46,6 +46,7 @@
     'node_use_quic%': 'false',
     'node_use_dtls%': 'false',
     'node_use_sqlite%': 'true',
+    'node_use_toml%': 'false',
     'node_use_ffi%': 'false',
     'node_use_v8_platform%': 'true',
     'node_enable_v8_vtunejit%': 'false',
@@ -890,6 +891,18 @@
         [ 'node_use_sqlite=="true"', {
           'sources': [
             '<@(node_sqlite_sources)',
+          ],
+        }],
+        [ 'node_use_toml=="true"', {
+          'sources': [
+            'src/node_toml.cc',
+          ],
+          'conditions': [
+            [ 'node_shared_tomlplusplus=="false"', {
+              'dependencies': [
+                'deps/tomlplusplus/tomlplusplus.gyp:tomlplusplus',
+              ],
+            }],
           ],
         }],
         [ 'node_use_ffi=="true"', {

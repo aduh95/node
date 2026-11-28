@@ -126,7 +126,8 @@
   NODE_BUILTIN_DTLS_BINDINGS(V)                                                \
   NODE_BUILTIN_QUIC_BINDINGS(V)                                                \
   NODE_BUILTIN_SQLITE_BINDINGS(V)                                              \
-  NODE_BUILTIN_FFI_BINDINGS(V)
+  NODE_BUILTIN_FFI_BINDINGS(V)                                                 \
+  NODE_BUILTIN_TOML_BINDINGS(V)
 
 // This is used to load built-in bindings. Instead of using
 // __attribute__((constructor)), we call the _register_<modname>

@@ -23,6 +23,10 @@ if (common.hasSQLite) {
   schemelessBlockList.add('sqlite');
 }
 
+if (common.hasTOML) {
+  schemelessBlockList.add('formats/toml');
+}
+
 const testModules = [];
 for (const mod of schemelessBlockList) {
   testModules.push(`node:${mod}`);

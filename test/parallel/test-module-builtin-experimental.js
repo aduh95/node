@@ -65,6 +65,9 @@ if (common.hasFFI) {
 if (common.hasSQLite) {
   schemeOnlyBuiltins.push('node:sqlite');
 }
+if (common.hasTOML) {
+  schemeOnlyBuiltins.push('node:formats/toml');
+}
 
 for (const id of schemeOnlyBuiltins) {
   spawnSyncAndAssert(process.execPath, [

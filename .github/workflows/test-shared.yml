@@ -33,6 +33,7 @@ on:
       - deps/perfetto/**
       - deps/simdjson/**
       - deps/sqlite/**
+      - deps/tomlplusplus/**
       - deps/uv/**
       - deps/uvwasi/**
       - deps/v8/third_party/abseil-cpp/**
@@ -91,6 +92,7 @@ on:
       - deps/perfetto/**
       - deps/simdjson/**
       - deps/sqlite/**
+      - deps/tomlplusplus/**
       - deps/uv/**
       - deps/uvwasi/**
       - deps/v8/third_party/abseil-cpp/**
