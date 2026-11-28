@@ -87,6 +87,8 @@ licenseText="$(sed -e '/The data format used by the zlib library/,$d' -e 's/^\/\
 addlicense "zlib" "deps/zlib" "$licenseText"
 licenseText="$(cat "${rootdir}/deps/simdjson/LICENSE")"
 addlicense "simdjson" "deps/simdjson" "$licenseText"
+licenseText="$(cat "${rootdir}/deps/tomlplusplus/LICENSE")"
+addlicense "toml++" "deps/tomlplusplus" "$licenseText"
 licenseText="$(cat "${rootdir}/deps/v8/third_party/simdutf/LICENSE")"
 addlicense "simdutf" "deps/v8/third_party/simdutf" "$licenseText"
 licenseText="$(curl -sL https://raw.githubusercontent.com/ada-url/ada/HEAD/LICENSE-MIT)"

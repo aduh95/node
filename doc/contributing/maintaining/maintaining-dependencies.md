@@ -32,6 +32,7 @@ This a list of all the dependencies:
 * [postject][]
 * [simdjson][]
 * [sqlite][]
+* [toml++][]
 * [undici][]
 * [uvwasi][]
 * [V8][]
@@ -389,6 +390,11 @@ a C++ library for fast JSON parsing.
 The [sqlite](https://github.com/sqlite/sqlite) dependency is
 an embedded SQL database engine written in C.
 
+### toml++
+
+The [toml++](https://github.com/marzer/tomlplusplus) dependency is
+a header-only C++ library for parsing and serializing TOML.
+
 ### undici
 
 The [undici](https://github.com/nodejs/undici) dependency is an HTTP/1.1 client,
@@ -452,6 +458,7 @@ according to [RFC 8878](https://datatracker.ietf.org/doc/html/rfc8878).
 [postject]: #postject
 [simdjson]: #simdjson
 [sqlite]: #sqlite
+[toml++]: #toml
 [undici]: #undici
 [update-openssl-action]: ../../../.github/workflows/update-openssl.yml
 [uvwasi]: #uvwasi
