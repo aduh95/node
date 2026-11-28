@@ -3408,6 +3408,12 @@ vector for denial-of-service attacks.
 An attempt was made to issue Server Name Indication from a TLS server-side
 socket, which is only valid from a client.
 
+<a id="ERR_TOML_PARSE"></a>
+
+### `ERR_TOML_PARSE`
+
+A TOML document passed to [`toml.parse()`][] is invalid.
+
 <a id="ERR_TRACE_EVENTS_CATEGORY_REQUIRED"></a>
 
 ### `ERR_TRACE_EVENTS_CATEGORY_REQUIRED`
@@ -4848,6 +4854,7 @@ An error occurred trying to allocate memory. This should never happen.
 [`REPL`]: repl.md
 [`ServerResponse`]: http.md#class-httpserverresponse
 [`Temporal`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Temporal
+[`toml.parse()`]: formats.md#tomlparseinput-options
 [`Worker`]: worker_threads.md#class-worker
 [`Writable`]: stream.md#class-streamwritable
 [`ZipBuffer`]: zlib.md#class-zlibzipbuffer

@@ -286,6 +286,12 @@ Indicates whether V8 was built with its sandbox enabled, in which case
 
 Indicates whether SQLite is available.
 
+### `hasTOML`
+
+* [\<boolean>][<boolean>]
+
+Indicates whether toml++ support (`node:formats/toml`) is available.
+
 ### `inFreeBSDJail`
 
 * [\<boolean>][<boolean>]
@@ -514,6 +520,11 @@ was disabled at compile time.
 
 Skip the rest of the tests in the current file when the SQLite
 was disabled at compile time.
+
+### `skipIfTOMLMissing()`
+
+Skip the rest of the tests in the current file when toml++ support was
+disabled at compile time.
 
 ### `skipIf32Bits()`
 

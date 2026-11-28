@@ -72,6 +72,7 @@ const hasCrypto = Boolean(process.versions.openssl) &&
 const hasInspector = Boolean(process.features.inspector);
 const hasSQLite = Boolean(process.versions.sqlite);
 const hasFFI = Boolean(process.config.variables.node_use_ffi);
+const hasTOML = Boolean(process.config.variables.node_use_toml);
 const hasPerfetto = Boolean(process.config.variables.v8_use_perfetto);
 
 const hasDtls = hasCrypto && !!process.features.dtls;
@@ -771,6 +772,12 @@ function skipIfFFIMissing() {
   }
 }
 
+function skipIfTOMLMissing() {
+  if (!hasTOML) {
+    skip('missing toml++');
+  }
+}
+
 function skipIfPerfettoEnabled() {
   if (hasPerfetto) {
     skip('Perfetto is enabled');
@@ -1028,6 +1035,7 @@ const common = {
   hasInspector,
   hasSQLite,
   hasFFI,
+  hasTOML,
   hasLocalStorage,
   hasPerfetto,
   invalidArgTypeHelper,
@@ -1063,6 +1071,7 @@ const common = {
   skipIfEslintMissing,
   skipIfInspectorDisabled,
   skipIfFFIMissing,
+  skipIfTOMLMissing,
   skipIfSQLiteMissing,
   skipIfPerfettoEnabled,
   skipIfPerfettoDisabled,

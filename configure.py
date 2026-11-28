@@ -1091,6 +1091,12 @@ parser.add_argument('--without-sqlite',
     default=None,
     help='build without SQLite (disables SQLite and Web Storage API)')
 
+parser.add_argument('--with-toml',
+    action='store_true',
+    dest='with_toml',
+    default=None,
+    help='build with toml++ (enables node:formats/toml)')
+
 parser.add_argument('--without-ffi',
     action='store_true',
     dest='without_ffi',
@@ -1937,7 +1943,11 @@ def gcc_version_ge(version_checked):
   return True
 
 def configure_node_lib_files(o):
-  o['variables']['node_library_files'] = SearchFiles('lib', 'js')
+  files = SearchFiles('lib', 'js')
+  if not options.with_toml:
+    toml_files = {'lib/formats/toml.js', 'lib/internal/formats/toml.js'}
+    files = [f for f in files if f not in toml_files]
+  o['variables']['node_library_files'] = files
 
 def configure_node_cctest_sources(o):
   o['variables']['node_cctest_sources'] = [] + \
@@ -2527,6 +2537,9 @@ def configure_ffi(o):
 
   configure_library('ffi', o, pkgname='libffi')
 
+def configure_tomlplusplus(o):
+  o['variables']['node_use_toml'] = b(options.with_toml)
+
 def configure_quic(o):
   if options.experimental_quic and options.without_ssl:
     error('--experimental-quic is incompatible with --without-ssl')
@@ -3076,6 +3089,7 @@ configure_perfetto(output);
 configure_sqlite(output);
 configure_ffi(output);
 configure_library('temporal_capi', output)
+configure_tomlplusplus(output)
 configure_library('uvwasi', output)
 configure_library('zstd', output, pkgname='libzstd')
 configure_v8(output, configurations)

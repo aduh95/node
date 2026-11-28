@@ -13,6 +13,7 @@ args@{
       "--debug-node"
       "--error-on-warn"
     ];
+    withToml = true;
   }
   // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin (
     # Disable optional features on Darwin for coverage and faster CI.
